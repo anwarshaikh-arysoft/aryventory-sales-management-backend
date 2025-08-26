@@ -483,11 +483,6 @@ export default function Leads(props: LeadsPageProps) {
                                                                         {lead.business_type_data.name}
                                                                     </Badge>
                                                                 )}
-                                                                {lead.monthly_sales_volume_data && (
-                                                                    <div className="text-xs text-muted-foreground">
-                                                                        Vol: {lead.monthly_sales_volume_data.volume}
-                                                                    </div>
-                                                                )}
                                                             </div>
                                                         </td>
                                                         <td className="p-3">
@@ -502,7 +497,7 @@ export default function Leads(props: LeadsPageProps) {
                                                                             {lead.lead_status_data.name}
                                                                         </Badge>
                                                                 )}
-                                                                {renderRating(lead.prospect_rating)}
+                                                                
                                                             </div>
                                                         </td>
                                                         <td className="p-3">

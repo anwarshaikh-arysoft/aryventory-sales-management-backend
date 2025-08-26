@@ -98,6 +98,7 @@ export default function LeadPage({ leadId }: LeadPageProps) {
                   <CardDescription>Overview of this lead</CardDescription>
                 </CardHeader>
                 <CardContent>
+
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div>
                       <div className="text-sm text-muted-foreground">Contact Person</div>
@@ -117,9 +118,10 @@ export default function LeadPage({ leadId }: LeadPageProps) {
                     </div>
                     <div className="sm:col-span-2">
                       <div className="text-sm text-muted-foreground">Address</div>
-                      <div className="flex items-center gap-2">{lead.area_locality ? (<><MapPin className="h-4 w-4" />{lead.area_locality}</>) : '-'}</div>
+                      <div className="flex items-center gap-2">{lead.address ? (<><MapPin className="h-4 w-4" />{lead.address}</>) : '-'}</div>
                     </div>
                   </div>
+
                   <Separator className="my-4" />
                   <div className="grid gap-4 sm:grid-cols-3">
                     <div>
@@ -137,10 +139,6 @@ export default function LeadPage({ leadId }: LeadPageProps) {
                           <Badge className="bg-blue-500" variant="secondary">{lead.assigned_to_user.name}</Badge>
                         ) : 'Unassigned'}
                       </div>
-                    </div>
-                    <div>
-                      <div className="text-sm text-muted-foreground">Prospect Rating</div>
-                      {renderRating(lead.prospect_rating)}
                     </div>
                     <div>
                       <div className="text-sm text-muted-foreground">Next Follow-up</div>
@@ -208,7 +206,7 @@ export default function LeadPage({ leadId }: LeadPageProps) {
                                         <li key={audio.id}>
                                           <div>
                                             <p>Audio (3gp format, may not play in all browsers):</p>
-                                            <a href={audio.media} download target="_blank" rel="noopener noreferrer" className="text-lime-600 underline flex items-center gap-1">
+                                            <a href={'/storage/' + audio.media} download target="_blank" rel="noopener noreferrer" className="text-lime-600 underline flex items-center gap-1">
                                              <Download size={12} /> Download audio
                                             </a>
                                           </div>
@@ -219,7 +217,7 @@ export default function LeadPage({ leadId }: LeadPageProps) {
                                     // For mp3 and other supported formats, use audio player
                                     return (
                                       <li key={audio.id}>
-                                        <audio controls src={audio.media} className="mt-1" />
+                                        <audio controls src={'/storage/' + audio.media} className="mt-1" />
                                       </li>
                                     );
                                   })}
@@ -235,7 +233,7 @@ export default function LeadPage({ leadId }: LeadPageProps) {
                                   {m.selfies.map((selfie) => (
                                     <img
                                       key={selfie.id}
-                                      src={selfie.media}
+                                      src={'/storage/' + selfie.media}
                                       alt="Selfie"
                                       className="w-20 h-20 rounded object-cover"
                                     />
@@ -252,7 +250,7 @@ export default function LeadPage({ leadId }: LeadPageProps) {
                                   {m.shop_photos.map((photo) => (
                                     <img
                                       key={photo.id}
-                                      src={photo.media}
+                                      src={'/storage/' + photo.media}
                                       alt="Shop"
                                       className="w-20 h-20 rounded object-cover"
                                     />

@@ -13,6 +13,11 @@ class Meeting extends Model
         'lead_id',
         'meeting_start_time',
         'meeting_end_time',
+        'meeting_start_latitude',
+        'meeting_start_longitude',
+        'meeting_end_latitude',
+        'meeting_end_longitude',
+        'meeting_end_notes',
     ];
 
     public function lead()

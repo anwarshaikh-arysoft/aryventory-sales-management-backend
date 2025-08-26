@@ -89,20 +89,17 @@ export interface Lead {
     pincode?: string;
     gps_location?: string;
     business_type?: number;
-    monthly_sales_volume?: number;
     current_system?: number;
     lead_status?: number;
     plan_interest?: string;
     next_follow_up_date?: string;
     meeting_notes?: string;
-    prospect_rating?: number;
     created_at: string;
     updated_at: string;
     created_by_user?: User;
     assigned_to_user?: User;
     last_updated_by_user?: User;
     business_type_data?: BusinessType;
-    monthly_sales_volume_data?: MonthlySalesVolume;
     current_system_data?: CurrentSystem;
     lead_status_data?: LeadStatus;
     histories?: LeadHistory[];
@@ -152,7 +149,6 @@ export interface LeadHistory {
 
 export interface LeadFormOptions {
     business_types: BusinessType[];
-    monthly_sales_volumes: MonthlySalesVolume[];
     current_systems: CurrentSystem[];
     lead_statuses: LeadStatus[];
     users: User[];

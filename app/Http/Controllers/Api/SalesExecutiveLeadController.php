@@ -22,6 +22,25 @@ class SalesExecutiveLeadController extends Controller
         return response()->json($leads);
     }
 
+    // Ge the lead counts by status for the logged-in sales executive
+    public function leadCountsByStatus()
+    {
+        $userId = Auth::id();
+        $counts = Lead::where('assigned_to', $userId)
+            ->select('lead_status', \DB::raw('count(*) as total'))
+            ->groupBy('lead_status')
+            ->with('leadStatusData:id,name') // Eager load lead status details
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'lead_status' => $item->lead_status,
+                    'status_name' => $item->leadStatusData ? $item->leadStatusData->name : null,
+                    'total' => $item->total,
+                ];
+            });
+        return response()->json($counts);
+    }
+
     // get all leads assigned to the logged-in sales executive with pagination, search, and filters
     /* 
     GET /sales-executive/leads?search=sharma&lead_status[]=Open&lead_status[]=Warm&follow_up_start_date=2025-08-01&follow_up_end_date=2025-08-31&sort=next_follow_up_date&direction=asc&per_page=20
@@ -100,22 +119,16 @@ class SalesExecutiveLeadController extends Controller
                 'pincode' => 'nullable|string',
                 'gps_location' => 'nullable|string',
                 'business_type' => 'nullable|integer',
-                'monthly_sales_volume' => 'nullable|integer',
                 'current_system' => 'nullable|integer',
                 'lead_status' => 'nullable|integer',
                 'plan_interest' => 'nullable|string',
                 'next_follow_up_date' => 'nullable|date',
                 'meeting_notes' => 'nullable|string',
-                'prospect_rating' => 'nullable|integer',
             ]);
 
             $validated['created_by'] = Auth::id();
             $validated['assigned_to'] = Auth::id();
             $validated['last_updated_by'] = Auth::id();
-
-            if ($validated['monthly_sales_volume'] === null) {
-                $validated['monthly_sales_volume'] = '1'; // Default value if not provided
-            }
 
             $lead = Lead::create($validated);
 
@@ -163,13 +176,11 @@ class SalesExecutiveLeadController extends Controller
             'pincode' => 'nullable|string',
             'gps_location' => 'nullable|string',
             'business_type' => 'nullable|integer',
-            'monthly_sales_volume' => 'nullable|integer',
             'current_system' => 'nullable|integer',
             'lead_status' => 'nullable|integer',
             'plan_interest' => 'nullable|string',
             'next_follow_up_date' => 'nullable|date',
             'meeting_notes' => 'nullable|string',
-            'prospect_rating' => 'nullable|integer',
             'completed_at' => 'nullable|date',
         ]);
 

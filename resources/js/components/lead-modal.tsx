@@ -34,13 +34,11 @@ interface FormData {
     pincode: string;
     gps_location: string;
     business_type: string;
-    monthly_sales_volume: string;
     current_system: string;
     lead_status: string;
     plan_interest: string;
     next_follow_up_date: string;
     meeting_notes: string;
-    prospect_rating: string;
     assigned_to: string;
     action: string;
 }
@@ -61,13 +59,11 @@ export default function LeadModal({ isOpen, onClose, onSave, lead, formOptions }
         pincode: '',
         gps_location: '',
         business_type: '',
-        monthly_sales_volume: '',
         current_system: '',
         lead_status: '',
         plan_interest: '',
         next_follow_up_date: '',
         meeting_notes: '',
-        prospect_rating: '',
         assigned_to: '',
         action: '',        
     });
@@ -93,13 +89,11 @@ export default function LeadModal({ isOpen, onClose, onSave, lead, formOptions }
                     pincode: lead.pincode || '',
                     gps_location: lead.gps_location || '',
                     business_type: lead.business_type?.toString() || '',
-                    monthly_sales_volume: lead.monthly_sales_volume?.toString() || '',
                     current_system: lead.current_system?.toString() || '',
                     lead_status: lead.lead_status?.toString() || '',
                     plan_interest: lead.plan_interest || '',
                     next_follow_up_date: lead.next_follow_up_date ? lead.next_follow_up_date.split('T')[0] : '',
                     meeting_notes: lead.meeting_notes || '',
-                    prospect_rating: lead.prospect_rating?.toString() || '',
                     assigned_to: lead.assigned_to?.toString() || '',
                     action: '',
                 });
@@ -116,13 +110,11 @@ export default function LeadModal({ isOpen, onClose, onSave, lead, formOptions }
                     pincode: '',
                     gps_location: '',
                     business_type: '',
-                    monthly_sales_volume: '',
                     current_system: '',
                     lead_status: '',
                     plan_interest: '',
                     next_follow_up_date: '',
                     meeting_notes: '',
-                    prospect_rating: '',
                     assigned_to: '',
                     action: '',
                 });
@@ -162,19 +154,15 @@ export default function LeadModal({ isOpen, onClose, onSave, lead, formOptions }
             newErrors.mobile_number = ['Mobile number is required'];
         }
 
+        if (!formData.business_type.trim() || formData.business_type === 'none') {
+            newErrors.business_type = ['Business type is required'];
+        }        
+
         // Email validation (optional but if provided should be valid)
         if (formData.email && formData.email.trim()) {
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             if (!emailRegex.test(formData.email)) {
                 newErrors.email = ['Please enter a valid email address'];
-            }
-        }
-
-        // Prospect rating validation
-        if (formData.prospect_rating && formData.prospect_rating.trim()) {
-            const rating = parseInt(formData.prospect_rating);
-            if (isNaN(rating) || rating < 1 || rating > 5) {
-                newErrors.prospect_rating = ['Prospect rating must be between 1 and 5'];
             }
         }
 
@@ -204,13 +192,11 @@ export default function LeadModal({ isOpen, onClose, onSave, lead, formOptions }
                 pincode: formData.pincode || null,
                 gps_location: formData.gps_location || null,
                 business_type: formData.business_type && formData.business_type !== 'none' ? parseInt(formData.business_type) : null,
-                monthly_sales_volume: formData.monthly_sales_volume && formData.monthly_sales_volume !== 'none' ? parseInt(formData.monthly_sales_volume) : null,
                 current_system: formData.current_system && formData.current_system !== 'none' ? parseInt(formData.current_system) : null,
                 lead_status: formData.lead_status && formData.lead_status !== 'none' ? parseInt(formData.lead_status) : null,
                 plan_interest: formData.plan_interest || null,
                 next_follow_up_date: formData.next_follow_up_date || null,
                 meeting_notes: formData.meeting_notes || null,
-                prospect_rating: formData.prospect_rating && formData.prospect_rating !== 'none' ? parseInt(formData.prospect_rating) : null,
                 assigned_to: formData.assigned_to && formData.assigned_to !== 'none' ? parseInt(formData.assigned_to) : null,
                 action: formData.action,
             };
@@ -229,11 +215,15 @@ export default function LeadModal({ isOpen, onClose, onSave, lead, formOptions }
             
             // Handle validation errors from server
             if (error.response?.status === 422 && error.response?.data?.errors) {
-                setErrors(error.response.data.errors);
+                setErrors(error.response.data.errors); }
+            else if (error.response?.status === 500) {
+                setErrors({
+                    general: [error.response.data.error || 'A server error occurred. Please try again later.']                    
+                });
             } else {
                 // Generic error handling
                 setErrors({
-                    general: ['An error occurred while saving the lead. Please try again.']
+                    general: ['An error occurred while saving the lead. Please try again.']                    
                 });
             }
         }
@@ -398,7 +388,7 @@ export default function LeadModal({ isOpen, onClose, onSave, lead, formOptions }
                                     <SelectValue placeholder="Select business type" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="none">No business type</SelectItem>
+                                    {/* <SelectItem value="none">No business type</SelectItem> */}
                                     {formOptions.business_types.map((type) => (
                                         <SelectItem key={type.id} value={type.id.toString()}>
                                             {type.name}
@@ -410,27 +400,7 @@ export default function LeadModal({ isOpen, onClose, onSave, lead, formOptions }
                                 <p className="text-sm text-red-600">{getErrorMessage('business_type')}</p>
                             )}
                         </div>
-
-                        {/* Monthly Sales Volume */}
-                        <div className="space-y-2">
-                            <Label htmlFor="monthly_sales_volume">Monthly Sales Volume</Label>
-                            <Select value={formData.monthly_sales_volume} onValueChange={(value) => handleInputChange('monthly_sales_volume', value)}>
-                                <SelectTrigger className={getErrorMessage('monthly_sales_volume') ? 'border-red-500' : ''}>
-                                    <SelectValue placeholder="Select sales volume" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="none">No sales volume</SelectItem>
-                                    {formOptions.monthly_sales_volumes.map((volume) => (
-                                        <SelectItem key={volume.id} value={volume.id.toString()}>
-                                            {volume.volume}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                            {getErrorMessage('monthly_sales_volume') && (
-                                <p className="text-sm text-red-600">{getErrorMessage('monthly_sales_volume')}</p>
-                            )}
-                        </div>
+                        
 
                         {/* Current System */}
                         <div className="space-y-2">
@@ -440,7 +410,7 @@ export default function LeadModal({ isOpen, onClose, onSave, lead, formOptions }
                                     <SelectValue placeholder="Select current system" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="none">No current system</SelectItem>
+                                    {/* <SelectItem value="none">No current system</SelectItem> */}
                                     {formOptions.current_systems.map((system) => (
                                         <SelectItem key={system.id} value={system.id.toString()}>
                                             {system.name}
@@ -461,7 +431,7 @@ export default function LeadModal({ isOpen, onClose, onSave, lead, formOptions }
                                     <SelectValue placeholder="Select lead status" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="none">No status</SelectItem>
+                                    {/* <SelectItem value="none">No status</SelectItem> */}
                                     {formOptions.lead_statuses.map((status) => (
                                         <SelectItem key={status.id} value={status.id.toString()}>
                                             {status.name}
@@ -511,28 +481,7 @@ export default function LeadModal({ isOpen, onClose, onSave, lead, formOptions }
                             {getErrorMessage('action') && (
                                 <p className="text-sm text-red-600">{getErrorMessage('action')}</p>
                             )}
-                        </div>
-
-                        {/* Prospect Rating */}
-                        <div className="space-y-2">
-                            <Label htmlFor="prospect_rating">Prospect Rating</Label>
-                            <Select value={formData.prospect_rating} onValueChange={(value) => handleInputChange('prospect_rating', value)}>
-                                <SelectTrigger className={getErrorMessage('prospect_rating') ? 'border-red-500' : ''}>
-                                    <SelectValue placeholder="Select rating" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="none">No rating</SelectItem>
-                                    <SelectItem value="1">1 Star</SelectItem>
-                                    <SelectItem value="2">2 Stars</SelectItem>
-                                    <SelectItem value="3">3 Stars</SelectItem>
-                                    <SelectItem value="4">4 Stars</SelectItem>
-                                    <SelectItem value="5">5 Stars</SelectItem>
-                                </SelectContent>
-                            </Select>
-                            {getErrorMessage('prospect_rating') && (
-                                <p className="text-sm text-red-600">{getErrorMessage('prospect_rating')}</p>
-                            )}
-                        </div>
+                        </div>                        
 
                         {/* Next Follow-up Date */}
                         <div className="space-y-2">

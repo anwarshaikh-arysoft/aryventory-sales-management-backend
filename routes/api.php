@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\SalesExecutiveLeadController;
 use App\Http\Controllers\Api\StatsController;
 use App\Http\Controllers\Api\ShiftController;
 use App\Http\Controllers\Api\UserPreferencesController;
+use App\Http\Controllers\Api\LeadStatusController;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
@@ -74,9 +75,12 @@ Route::middleware('auth:sanctum')->group(function () {
 
 // Leads api for sales executives
 Route::middleware('auth:sanctum')->group(function () {
-    // Route::apiResource('/sales-executive/leads', SalesExecutiveLeadController::class);
+    Route::apiResource('/sales-executive/leads', SalesExecutiveLeadController::class);
     Route::get('/sales-executive/leads', [SalesExecutiveLeadController::class, 'leads']);
     Route::get('/sales-executive/leads-by-follow-up', [SalesExecutiveLeadController::class, 'leadsByFollowUpDate']);
+
+    // Lead Counts by status for sales executives
+    Route::get('/sales-executive/lead-counts-by-status', [SalesExecutiveLeadController::class, 'leadCountsByStatus']);
 });
 
 // User preferences
@@ -104,7 +108,28 @@ Route::apiResource('users', App\Http\Controllers\Api\UserController::class);
 // Leads crud
 Route::apiResource('leads', App\Http\Controllers\Api\LeadController::class);
 
-Route::apiResource('meetings', App\Http\Controllers\Api\MeetingController::class);
+// Meetings crud
+Route::middleware('auth:sanctum')->group(function(){
+    Route::apiResource('meetings', App\Http\Controllers\Api\MeetingController::class);
+    Route::post('/meetings/check/status', [App\Http\Controllers\Api\MeetingController::class, 'getMeetingStatus']);
+
+    Route::post('/meetings/start', [App\Http\Controllers\Api\MeetingController::class, 'startMeeting']);
+    Route::post('/meetings/end', [App\Http\Controllers\Api\MeetingController::class, 'endMeeting']);
+});
+
+Route::middleware('auth:sanctum')->group(function () {
+    // Public (for all authenticated users)
+    Route::get('lead-statuses', [LeadStatusController::class, 'index']);
+    Route::get('lead-statuses/{lead_status}', [LeadStatusController::class, 'show']);
+
+    // Admin-only
+    Route::middleware('role:Admin')->group(function () {
+        Route::post('lead-statuses', [LeadStatusController::class, 'store']);
+        Route::put('lead-statuses/{lead_status}', [LeadStatusController::class, 'update']);
+        Route::patch('lead-statuses/{lead_status}', [LeadStatusController::class, 'update']);
+        Route::delete('lead-statuses/{lead_status}', [LeadStatusController::class, 'destroy']);
+    });
+});
 
 Route::apiResource('recorded-audios-meeting', App\Http\Controllers\Api\RecordedAudioForMeetingController::class);
 Route::apiResource('selfies-meeting', App\Http\Controllers\Api\SelfieForMeetingController::class);

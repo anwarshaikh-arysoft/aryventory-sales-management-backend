@@ -23,13 +23,11 @@ class Lead extends Model
         'pincode',
         'gps_location',
         'business_type',
-        'monthly_sales_volume',
         'current_system',
         'lead_status',
         'plan_interest',
         'next_follow_up_date',
         'meeting_notes',
-        'prospect_rating',
         'completed_at',        
     ];
 
@@ -87,11 +85,6 @@ class Lead extends Model
     public function businessTypeData()
     {
         return $this->belongsTo(BusinessType::class, 'business_type');
-    }
-
-    public function monthlySalesVolumeData()
-    {
-        return $this->belongsTo(MonthlySalesVolume::class, 'monthly_sales_volume');
     }
 
     public function currentSystemData()

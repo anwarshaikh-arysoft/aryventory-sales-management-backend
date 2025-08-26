@@ -14,6 +14,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
+use App\Http\Requests\LeadStoreRequest;
+
 
 class LeadController extends Controller
 {
@@ -27,7 +29,6 @@ class LeadController extends Controller
             'assignedToUser',
             'lastUpdatedByUser',
             'businessTypeData',
-            'monthlySalesVolumeData',
             'currentSystemData',
             'leadStatusData'
         ]);
@@ -62,10 +63,6 @@ class LeadController extends Controller
             $query->where('business_type', $request->business_type);
         }
 
-        if ($request->filled('monthly_sales_volume')) {
-            $query->where('monthly_sales_volume', $request->monthly_sales_volume);
-        }
-
         if ($request->filled('current_system')) {
             $query->where('current_system', $request->current_system);
         }
@@ -80,10 +77,6 @@ class LeadController extends Controller
 
         if ($request->filled('created_by')) {
             $query->where('created_by', $request->created_by);
-        }
-
-        if ($request->filled('prospect_rating')) {
-            $query->where('prospect_rating', $request->prospect_rating);
         }
 
         // Date filtering
@@ -141,45 +134,76 @@ class LeadController extends Controller
     /**
      * Store a newly created lead in storage.
      */
-    public function store(Request $request)
+    // public function store(Request $request)
+    // {
+    //     try {
+    //     $validated = $request->validate([
+    //         'shop_name' => 'required|string|max:255',
+    //         'contact_person' => 'required|string|max:255',
+    //         'mobile_number' => 'required|string|max:20',
+    //         'alternate_number' => 'nullable|string|max:20',
+    //         'email' => 'nullable|email|max:255',
+    //         'address' => 'required|string|max:500',
+    //         'area_locality' => 'required|string|max:255',
+    //         'pincode' => 'required|string|max:10',
+    //         'gps_location' => 'required|string|max:255',
+    //         'business_type' => 'required|exists:business_types,id',
+    //         'current_system' => 'required|exists:current_systems,id',
+    //         'lead_status' => 'required|exists:lead_statuses,id',
+    //         'plan_interest' => 'required|string|max:255',
+    //         'next_follow_up_date' => 'required|date',
+    //         'meeting_notes' => 'nullable|string',
+    //         'assigned_to' => 'required|exists:users,id',
+    //     ]);
+
+    //     // Set the created_by and last_updated_by to the authenticated user
+    //     $validated['created_by'] = auth()->user()->id ?? 1; // Fallback to user ID 1 if no auth
+    //     $validated['last_updated_by'] = auth()->user()->id ?? 1;
+
+    //     $lead = Lead::create($validated);
+    //     $lead->load([
+    //         'createdByUser',
+    //         'assignedToUser',
+    //         'lastUpdatedByUser',
+    //         'businessTypeData',
+    //         'currentSystemData',
+    //         'leadStatusData'
+    //     ]);
+    //     } catch (\Throwable $e) {
+    //         Log::error('Error creating lead: ' . $e->getMessage());
+    //         return response()->json(['message' => 'Failed to create lead', 'error' => $e->getMessage()], 500);
+    //     }
+
+    //     return response()->json($lead, 201);
+    // }
+
+    public function store(LeadStoreRequest $request)
     {
-        $validated = $request->validate([
-            'shop_name' => 'required|string|max:255',
-            'contact_person' => 'required|string|max:255',
-            'mobile_number' => 'required|string|max:20',
-            'alternate_number' => 'nullable|string|max:20',
-            'email' => 'nullable|email|max:255',
-            'address' => 'nullable|string|max:500',
-            'area_locality' => 'nullable|string|max:255',
-            'pincode' => 'nullable|string|max:10',
-            'gps_location' => 'nullable|string|max:255',
-            'business_type' => 'nullable|exists:business_types,id',
-            'monthly_sales_volume' => 'nullable|exists:monthly_sales_volumes,id',
-            'current_system' => 'nullable|exists:current_systems,id',
-            'lead_status' => 'nullable|exists:lead_statuses,id',
-            'plan_interest' => 'nullable|string|max:255',
-            'next_follow_up_date' => 'nullable|date',
-            'meeting_notes' => 'nullable|string',
-            'prospect_rating' => 'nullable|integer|min:1|max:5',
-            'assigned_to' => 'nullable|exists:users,id',
-        ]);
+        $data = $request->validated();
 
-        // Set the created_by and last_updated_by to the authenticated user
-        $validated['created_by'] = auth()->user()->id ?? 1; // Fallback to user ID 1 if no auth
-        $validated['last_updated_by'] = auth()->user()->id ?? 1;
+        $userId = optional($request->user())->id ?? 1;
+        $data['created_by'] = $userId;
+        $data['last_updated_by'] = $userId;
 
-        $lead = Lead::create($validated);
-        $lead->load([
-            'createdByUser',
-            'assignedToUser',
-            'lastUpdatedByUser',
-            'businessTypeData',
-            'monthlySalesVolumeData',
-            'currentSystemData',
-            'leadStatusData'
-        ]);
+        try {
+            $lead = Lead::create($data);
+            $lead->load([
+                'createdByUser',
+                'assignedToUser',
+                'lastUpdatedByUser',
+                'businessTypeData',
+                'currentSystemData',
+                'leadStatusData'
+            ]);
 
-        return response()->json($lead, 201);
+            return response()->json($lead, 201);
+        } catch (\Throwable $e) {
+            Log::error('Error creating lead: ' . $e->getMessage());
+            return response()->json([
+                'message' => 'Failed to create lead',
+                'error'   => app()->isProduction() ? null : $e->getMessage(),
+            ], 500);
+        }
     }
 
     /**
@@ -192,7 +216,6 @@ class LeadController extends Controller
             'assignedToUser',
             'lastUpdatedByUser',
             'businessTypeData',
-            'monthlySalesVolumeData',
             'currentSystemData',
             'leadStatusData',
             'recordedAudios',
@@ -225,13 +248,11 @@ class LeadController extends Controller
             'pincode' => 'nullable|string|max:10',
             'gps_location' => 'nullable|string|max:255',
             'business_type' => 'nullable|exists:business_types,id',
-            'monthly_sales_volume' => 'nullable|exists:monthly_sales_volumes,id',
             'current_system' => 'nullable|exists:current_systems,id',
             'lead_status' => 'nullable|exists:lead_statuses,id',
             'plan_interest' => 'nullable|string|max:255',
             'next_follow_up_date' => 'nullable|date',
             'meeting_notes' => 'nullable|string',
-            'prospect_rating' => 'nullable|integer|min:1|max:5',
             'assigned_to' => 'nullable|exists:users,id',
             'action' => 'nullable|string|max:255',
         ]);
@@ -264,7 +285,6 @@ class LeadController extends Controller
             'assignedToUser',
             'lastUpdatedByUser',
             'businessTypeData',
-            'monthlySalesVolumeData',
             'currentSystemData',
             'leadStatusData'
         ]);
@@ -290,7 +310,6 @@ class LeadController extends Controller
     {
         return response()->json([
             'business_types' => BusinessType::all(),
-            'monthly_sales_volumes' => MonthlySalesVolume::all(),
             'current_systems' => CurrentSystem::all(),
             'lead_statuses' => LeadStatus::all(),
             'users' => User::select('id', 'name', 'email')->get(),

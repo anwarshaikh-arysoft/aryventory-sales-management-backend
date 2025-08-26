@@ -87,9 +87,6 @@ class ShiftController extends Controller
         ]);
     }
 
-
-
-
     public function startBreak(Request $request)
     {
         $user = $request->user();

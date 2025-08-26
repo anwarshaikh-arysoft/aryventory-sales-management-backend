@@ -46,4 +46,39 @@ class StatsController extends Controller
             ], 500);
         }
     }
+
+    public function dailyActivity(Request $request)
+    {
+        try {
+            $user = $request->user();
+
+            $today = Carbon::today();
+            $tomorrow = Carbon::tomorrow();
+
+            $newLeads = Lead::whereBetween('created_at', [$today, $tomorrow])
+                ->where('assigned_to', $user->id)
+                ->count();
+
+            $completedLeads = Lead::whereBetween('completed_at', [$today, $tomorrow])
+                ->where('assigned_to', $user->id)
+                ->count();
+
+            $followUps = Lead::whereDate('next_follow_up_date', '=', $today)
+                ->where('assigned_to', $user->id)
+                ->count();
+
+            return response()->json([
+                'new leads today' => $newLeads,
+                'completed leads today' => $completedLeads,
+                'follow ups today' => $followUps,
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'message' => 'Failed to fetch daily activity',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+
 }
