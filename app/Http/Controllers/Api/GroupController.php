@@ -12,9 +12,19 @@ class GroupController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        return response()->json(Group::all());
+        $perPage = (int) $request->get('per_page', 15);
+
+        $query = Group::query()
+            ->when($request->filled('q'), function ($q) use ($request) {
+                $q->where('name', 'like', '%'.$request->get('q').'%');
+            })
+            ->orderBy('id');
+
+        $paginated = $query->paginate($perPage);
+
+        return response()->json($paginated);
     }
 
     /**

@@ -21,6 +21,7 @@ interface UserModalProps {
     user: User | null; // null for create, User object for edit
     roles: Role[];
     groups: Group[];
+    managers: User[];
 }
 
 interface FormData {
@@ -30,15 +31,16 @@ interface FormData {
     designation: string;
     role_id: string;
     group_id: string;
-    password: string;
-    password_confirmation: string;
+    manager_id: string;
+    password?: string;
+    password_confirmation?: string;
 }
 
 interface FormErrors {
     [key: string]: string[];
 }
 
-export default function UserModal({ isOpen, onClose, onSave, user, roles, groups }: UserModalProps) {
+export default function UserModal({ isOpen, onClose, onSave, user, roles, groups, managers }: UserModalProps) {
     const [formData, setFormData] = useState<FormData>({
         name: '',
         email: '',
@@ -46,6 +48,7 @@ export default function UserModal({ isOpen, onClose, onSave, user, roles, groups
         designation: '',
         role_id: '',
         group_id: '',
+        manager_id: '',
         password: '',
         password_confirmation: '',
     });
@@ -67,6 +70,7 @@ export default function UserModal({ isOpen, onClose, onSave, user, roles, groups
                     designation: user.designation || '',
                     role_id: user.role_id?.toString() || '',
                     group_id: user.group_id?.toString() || '',
+                    manager_id: user.manager_id?.toString() || '',
                     password: '',
                     password_confirmation: '',
                 });
@@ -79,6 +83,7 @@ export default function UserModal({ isOpen, onClose, onSave, user, roles, groups
                     designation: '',
                     role_id: '',
                     group_id: '',
+                    manager_id: '',
                     password: '',
                     password_confirmation: '',
                 });
@@ -120,7 +125,7 @@ export default function UserModal({ isOpen, onClose, onSave, user, roles, groups
             }
         }
 
-        // Password validation (required for create, optional for edit)
+        // Password validation (only required for create mode)
         if (!isEditMode) {
             if (!formData.password) {
                 newErrors.password = ['Password is required'];
@@ -129,15 +134,6 @@ export default function UserModal({ isOpen, onClose, onSave, user, roles, groups
             }
 
             if (formData.password !== formData.password_confirmation) {
-                newErrors.password_confirmation = ['Passwords do not match'];
-            }
-        } else {
-            // For edit mode, if password is provided, validate it
-            if (formData.password && formData.password.length < 6) {
-                newErrors.password = ['Password must be at least 6 characters'];
-            }
-
-            if (formData.password && formData.password !== formData.password_confirmation) {
                 newErrors.password_confirmation = ['Passwords do not match'];
             }
         }
@@ -164,10 +160,11 @@ export default function UserModal({ isOpen, onClose, onSave, user, roles, groups
                 designation: formData.designation || null,
                 role_id: formData.role_id && formData.role_id !== 'none' ? parseInt(formData.role_id) : null,
                 group_id: formData.group_id && formData.group_id !== 'none' ? parseInt(formData.group_id) : null,
+                manager_id: formData.manager_id && formData.manager_id !== 'none' ? parseInt(formData.manager_id) : null,
             };
 
-            // Add password only if provided
-            if (formData.password) {
+            // Add password only for create mode
+            if (!isEditMode && formData.password) {
                 submitData.password = formData.password;
             }
 
@@ -327,45 +324,60 @@ export default function UserModal({ isOpen, onClose, onSave, user, roles, groups
                         )}
                     </div>
 
-                    {/* Password */}
+                    {/* Manager */}
                     <div className="space-y-2">
-                        <Label htmlFor="password">
-                            Password {!isEditMode && '*'}
-                            {isEditMode && (
-                                <span className="text-sm text-muted-foreground ml-1">
-                                    (leave blank to keep current password)
-                                </span>
-                            )}
-                        </Label>
-                        <Input
-                            id="password"
-                            type="password"
-                            value={formData.password}
-                            onChange={(e) => handleInputChange('password', e.target.value)}
-                            placeholder="Enter password"
-                            className={getErrorMessage('password') ? 'border-red-500' : ''}
-                        />
-                        {getErrorMessage('password') && (
-                            <p className="text-sm text-red-600">{getErrorMessage('password')}</p>
+                        <Label htmlFor="manager">Manager</Label>
+                        <Select value={formData.manager_id} onValueChange={(value) => handleInputChange('manager_id', value)}>
+                            <SelectTrigger className={getErrorMessage('manager_id') ? 'border-red-500' : ''}>
+                                <SelectValue placeholder="Select a manager" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="none">No manager</SelectItem>
+                                {managers.map((manager) => (
+                                    <SelectItem key={manager.id} value={manager.id.toString()}>
+                                        {manager.name}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                        {getErrorMessage('manager_id') && (
+                            <p className="text-sm text-red-600">{getErrorMessage('manager_id')}</p>
                         )}
                     </div>
 
-                    {/* Confirm Password */}
-                    {(formData.password || !isEditMode) && (
-                        <div className="space-y-2">
-                            <Label htmlFor="password_confirmation">Confirm Password *</Label>
-                            <Input
-                                id="password_confirmation"
-                                type="password"
-                                value={formData.password_confirmation}
-                                onChange={(e) => handleInputChange('password_confirmation', e.target.value)}
-                                placeholder="Confirm password"
-                                className={getErrorMessage('password_confirmation') ? 'border-red-500' : ''}
-                            />
-                            {getErrorMessage('password_confirmation') && (
-                                <p className="text-sm text-red-600">{getErrorMessage('password_confirmation')}</p>
-                            )}
-                        </div>
+                    {/* Password - Only show in create mode */}
+                    {!isEditMode && (
+                        <>
+                            <div className="space-y-2">
+                                <Label htmlFor="password">Password *</Label>
+                                <Input
+                                    id="password"
+                                    type="password"
+                                    value={formData.password || ''}
+                                    onChange={(e) => handleInputChange('password', e.target.value)}
+                                    placeholder="Enter password"
+                                    className={getErrorMessage('password') ? 'border-red-500' : ''}
+                                />
+                                {getErrorMessage('password') && (
+                                    <p className="text-sm text-red-600">{getErrorMessage('password')}</p>
+                                )}
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label htmlFor="password_confirmation">Confirm Password *</Label>
+                                <Input
+                                    id="password_confirmation"
+                                    type="password"
+                                    value={formData.password_confirmation || ''}
+                                    onChange={(e) => handleInputChange('password_confirmation', e.target.value)}
+                                    placeholder="Confirm password"
+                                    className={getErrorMessage('password_confirmation') ? 'border-red-500' : ''}
+                                />
+                                {getErrorMessage('password_confirmation') && (
+                                    <p className="text-sm text-red-600">{getErrorMessage('password_confirmation')}</p>
+                                )}
+                            </div>
+                        </>
                     )}
 
                     <DialogFooter className="gap-2">

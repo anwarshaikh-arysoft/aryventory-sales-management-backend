@@ -20,6 +20,8 @@ export default function LeadPage({ leadId }: LeadPageProps) {
 
   const [error, setError] = useState<string | null>(null);
 
+  const storageUrl = 'https://sales-aryventory.s3.ap-south-1.amazonaws.com/'
+
   useEffect(() => {
     const fetchLead = async () => {
       setLoading(true);
@@ -206,7 +208,7 @@ export default function LeadPage({ leadId }: LeadPageProps) {
                                         <li key={audio.id}>
                                           <div>
                                             <p>Audio (3gp format, may not play in all browsers):</p>
-                                            <a href={'/storage/' + audio.media} download target="_blank" rel="noopener noreferrer" className="text-lime-600 underline flex items-center gap-1">
+                                            <a href={storageUrl + audio.media} download target="_blank" rel="noopener noreferrer" className="text-lime-600 underline flex items-center gap-1">
                                              <Download size={12} /> Download audio
                                             </a>
                                           </div>
@@ -217,7 +219,7 @@ export default function LeadPage({ leadId }: LeadPageProps) {
                                     // For mp3 and other supported formats, use audio player
                                     return (
                                       <li key={audio.id}>
-                                        <audio controls src={'/storage/' + audio.media} className="mt-1" />
+                                        <audio controls src={storageUrl + audio.media} className="mt-1" />
                                       </li>
                                     );
                                   })}
@@ -233,7 +235,7 @@ export default function LeadPage({ leadId }: LeadPageProps) {
                                   {m.selfies.map((selfie) => (
                                     <img
                                       key={selfie.id}
-                                      src={'/storage/' + selfie.media}
+                                      src={storageUrl + selfie.media}
                                       alt="Selfie"
                                       className="w-20 h-20 rounded object-cover"
                                     />
@@ -250,7 +252,7 @@ export default function LeadPage({ leadId }: LeadPageProps) {
                                   {m.shop_photos.map((photo) => (
                                     <img
                                       key={photo.id}
-                                      src={'/storage/' + photo.media}
+                                      src={storageUrl + photo.media}
                                       alt="Shop"
                                       className="w-20 h-20 rounded object-cover"
                                     />

@@ -10,9 +10,19 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class RoleController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        return response()->json(Role::all());
+        $perPage = (int) $request->get('per_page', 15);
+
+        $query = Role::query()
+            ->when($request->filled('q'), function ($q) use ($request) {
+                $q->where('name', 'like', '%'.$request->get('q').'%');
+            })
+            ->orderBy('id');
+
+        $paginated = $query->paginate($perPage);
+
+        return response()->json($paginated);
     }
 
     public function store(Request $request)

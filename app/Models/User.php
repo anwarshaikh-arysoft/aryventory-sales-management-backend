@@ -23,9 +23,10 @@ class User extends Authenticatable
         'email',
         'password',
         'phone',
-        'designation',
+        'designation',        
         'role_id',
         'group_id',
+        'manager_id',
     ];
 
     /**
@@ -75,6 +76,16 @@ class User extends Authenticatable
     public function leadFollowUps()
     {
         return $this->hasMany(LeadFollowUp::class);
+    }
+
+    public function manager()
+    {
+        return $this->belongsTo(User::class, 'manager_id');
+    }
+
+    public function subordinates()
+    {
+        return $this->hasMany(User::class, 'manager_id');
     }
 
     // JWT 

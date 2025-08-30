@@ -8,10 +8,11 @@ import Heading from '@/components/heading';
 import AppLayout from '@/layouts/app-layout';
 import { type PaginatedResponse, type Role, type User } from '@/types';
 import { router, usePage } from '@inertiajs/react';
-import { Edit2, Plus, Search, Trash2 } from 'lucide-react';
+import { Edit2, Plus, Search, Trash2, Key } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import UserModal from '@/components/user-modal';
+import UserPasswordModal from '@/components/user-password-modal';
 
 interface UsersPageProps {
     // These will be passed from the backend
@@ -21,6 +22,7 @@ export default function Users(props: UsersPageProps) {
     const [users, setUsers] = useState<PaginatedResponse<User> | null>(null);
     const [roles, setRoles] = useState<Role[]>([]);
     const [groups, setGroups] = useState<any[]>([]);
+    const [managers, setManagers] = useState<User[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedRole, setSelectedRole] = useState<string>('');
@@ -31,6 +33,10 @@ export default function Users(props: UsersPageProps) {
     // Modal state
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingUser, setEditingUser] = useState<User | null>(null);
+    
+    // Password modal state
+    const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+    const [passwordUser, setPasswordUser] = useState<User | null>(null);
     
     const fetchUsers = async () => {
         setLoading(true);
@@ -64,14 +70,16 @@ export default function Users(props: UsersPageProps) {
 
     const fetchRolesAndGroups = async () => {
         try {
-            const [rolesResponse, groupsResponse] = await Promise.all([
+            const [rolesResponse, groupsResponse, managersResponse] = await Promise.all([
                 axios.get('/api/roles'),
-                axios.get('/api/groups')
+                axios.get('/api/groups'),
+                axios.get('/api/users-managers')
             ]);
             setRoles(rolesResponse.data.data || rolesResponse.data);
             setGroups(groupsResponse.data.data || groupsResponse.data);
+            setManagers(managersResponse.data);
         } catch (error) {
-            console.error('Error fetching roles and groups:', error);
+            console.error('Error fetching roles, groups, and managers:', error);
         }
     };
 
@@ -127,6 +135,21 @@ export default function Users(props: UsersPageProps) {
     const handleUserSaved = () => {
         fetchUsers(); // Refresh the list
         handleModalClose();
+    };
+
+    const handleChangePassword = (user: User) => {
+        setPasswordUser(user);
+        setIsPasswordModalOpen(true);
+    };
+
+    const handlePasswordModalClose = () => {
+        setIsPasswordModalOpen(false);
+        setPasswordUser(null);
+    };
+
+    const handlePasswordChanged = () => {
+        // No need to refresh the list for password changes
+        handlePasswordModalClose();
     };
 
     const generatePaginationItems = () => {
@@ -237,6 +260,7 @@ export default function Users(props: UsersPageProps) {
                                                     <th className="p-3 text-left font-medium">Contact</th>
                                                     <th className="p-3 text-left font-medium">Role</th>
                                                     <th className="p-3 text-left font-medium">Group</th>
+                                                    <th className="p-3 text-left font-medium">Manager</th>
                                                     <th className="p-3 text-left font-medium">Designation</th>
                                                     <th className="p-3 text-left font-medium">Status</th>
                                                     <th className="p-3 text-right font-medium">Actions</th>
@@ -281,6 +305,13 @@ export default function Users(props: UsersPageProps) {
                                                             )}
                                                         </td>
                                                         <td className="p-3">
+                                                            {user.manager ? (
+                                                                <span className="text-sm font-medium">{user.manager.name}</span>
+                                                            ) : (
+                                                                <span className="text-muted-foreground">No manager</span>
+                                                            )}
+                                                        </td>
+                                                        <td className="p-3">
                                                             <span className="text-sm">
                                                                 {user.designation || '-'}
                                                             </span>
@@ -297,14 +328,25 @@ export default function Users(props: UsersPageProps) {
                                                                     size="sm"
                                                                     onClick={() => handleEditUser(user)}
                                                                     className="h-8 w-8 p-0"
+                                                                    title="Edit User"
                                                                 >
                                                                     <Edit2 className="h-4 w-4" />
                                                                 </Button>
                                                                 <Button
                                                                     variant="ghost"
                                                                     size="sm"
+                                                                    onClick={() => handleChangePassword(user)}
+                                                                    className="h-8 w-8 p-0 text-orange-600 hover:text-orange-700"
+                                                                    title="Change Password"
+                                                                >
+                                                                    <Key className="h-4 w-4" />
+                                                                </Button>
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="sm"
                                                                     onClick={() => handleDeleteUser(user.id)}
                                                                     className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                                                                    title="Delete User"
                                                                 >
                                                                     <Trash2 className="h-4 w-4" />
                                                                 </Button>
@@ -399,6 +441,15 @@ export default function Users(props: UsersPageProps) {
                 user={editingUser}
                 roles={roles}
                 groups={groups}
+                managers={managers}
+            />
+
+            {/* Password Change Modal */}
+            <UserPasswordModal
+                isOpen={isPasswordModalOpen}
+                onClose={handlePasswordModalClose}
+                onSuccess={handlePasswordChanged}
+                user={passwordUser}
             />
         </AppLayout>
     );

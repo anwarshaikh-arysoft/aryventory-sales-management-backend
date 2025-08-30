@@ -104,6 +104,8 @@ Route::apiResource('groups', GroupController::class);
 
 // Users crud
 Route::apiResource('users', App\Http\Controllers\Api\UserController::class);
+Route::get('users-managers', [App\Http\Controllers\Api\UserController::class, 'getManagers']);
+Route::put('users/{user}/password', [App\Http\Controllers\Api\UserController::class, 'updatePassword']);
 
 // Leads crud
 Route::apiResource('leads', App\Http\Controllers\Api\LeadController::class);
@@ -146,4 +148,13 @@ Route::middleware(['auth:api', 'role:Admin,Manager'])->group(function () {
     Route::get('/dashboard', function () {
         return response()->json(['message' => 'Welcome Admin or Manager']);
     });
+});
+
+// Admin Settings CRUD - Protected routes
+Route::middleware(['auth:sanctum', 'role:Admin'])->group(function () {
+    Route::apiResource('business-types', App\Http\Controllers\Api\BusinessTypeController::class);
+    Route::apiResource('current-systems', App\Http\Controllers\Api\CurrentSystemController::class);
+    Route::apiResource('plans', App\Http\Controllers\Api\PlanController::class);
+    Route::apiResource('preferences', App\Http\Controllers\Api\PreferenceController::class);
+    Route::apiResource('targets', App\Http\Controllers\Api\TargetController::class);
 });

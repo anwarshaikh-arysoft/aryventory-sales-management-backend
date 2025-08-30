@@ -39,12 +39,14 @@ export interface User {
     designation?: string;
     role_id?: number;
     group_id?: number;
+    manager_id?: number;
     avatar?: string;
     email_verified_at: string | null;
     created_at: string;
     updated_at: string;
     role?: Role;
     group?: Group;
+    manager?: User;
     [key: string]: unknown; // This allows for additional properties...
 }
 
@@ -145,6 +147,34 @@ export interface LeadHistory {
     updated_by_user?: User; // Some APIs might hydrate this name
     updated_by?: User; // Laravel relation 'updatedBy' serializes as 'updated_by'
     action?: string | number | null;
+}
+
+export interface Plan {
+    id: number;
+    name: string;
+    interval: string;
+    amount: number;
+    status: string;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface Preference {
+    id: number;
+    name: string;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface Target {
+    id: number;
+    user_id: number;
+    daily_meeting_targets: number;
+    closure_target: number;
+    revenue_targets: number;
+    created_at: string;
+    updated_at: string;
+    user?: User;
 }
 
 export interface LeadFormOptions {

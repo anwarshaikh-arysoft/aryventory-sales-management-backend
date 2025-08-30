@@ -14,7 +14,7 @@ class UserController extends Controller
     */
     public function index(Request $request)
     {
-        $query = User::with(['role', 'group']);
+        $query = User::with(['role', 'group', 'manager']);
 
         // Filtering
         if ($request->filled('name')) {
@@ -72,6 +72,7 @@ class UserController extends Controller
                 'designation' => 'nullable|string|max:255',
                 'role_id'     => 'nullable|exists:roles,id',
                 'group_id'    => 'nullable|exists:groups,id',
+                'manager_id'  => 'nullable|exists:users,id',
             ]);
 
             $validated['password'] = bcrypt($validated['password']);
@@ -91,7 +92,7 @@ class UserController extends Controller
      */
     public function show(User $user)
     {
-        $user->load(['role', 'group']);
+        $user->load(['role', 'group', 'manager']);
 
         return response()->json($user);
     }
@@ -110,6 +111,7 @@ class UserController extends Controller
                 'designation' => 'nullable|string|max:255',
                 'role_id'     => 'nullable|exists:roles,id',
                 'group_id'    => 'nullable|exists:groups,id',
+                'manager_id'  => 'nullable|exists:users,id',
             ]);
 
             if (isset($validated['password'])) {
@@ -136,6 +138,47 @@ class UserController extends Controller
             return response()->json(['message' => 'User deleted successfully']);
         } catch (\Throwable $e) {
             return response()->json(['message' => 'Failed to delete user', 'error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Get users with Manager role for dropdown.
+     */
+    public function getManagers()
+    {
+        try {
+            $managers = User::whereHas('role', function ($query) {
+                $query->where('name', 'Manager');
+            })->select('id', 'name')->get();
+
+            return response()->json($managers);
+        } catch (\Throwable $e) {
+            return response()->json(['message' => 'Failed to fetch managers', 'error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Update user password separately.
+     */
+    public function updatePassword(Request $request, User $user)
+    {
+        try {
+            $validated = $request->validate([
+                'password' => 'required|string|min:6',
+            ]);
+
+            $user->update([
+                'password' => bcrypt($validated['password'])
+            ]);
+
+            return response()->json([
+                'message' => 'Password updated successfully.',
+                'data' => $user
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json(['message' => 'Validation failed', 'errors' => $e->errors()], 422);
+        } catch (\Throwable $e) {
+            return response()->json(['message' => 'Failed to update password', 'error' => $e->getMessage()], 500);
         }
     }
 }

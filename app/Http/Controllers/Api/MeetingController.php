@@ -16,9 +16,10 @@ use App\Models\RecordedAudioForMeeting;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
+use App\Services\ObjectUploadService;
+
 class MeetingController extends Controller
 {
-
     public function index()
     {
         return Meeting::with(['lead', 'recordedAudios', 'selfies', 'shopPhotos'])->get();
@@ -57,7 +58,7 @@ class MeetingController extends Controller
 
     public function getMeetingStatus(Request $request)
     {
-        
+
         $validator = Validator::make($request->all(), [
             'lead_id' => 'required|exists:leads,id',
         ]);
@@ -114,17 +115,42 @@ class MeetingController extends Controller
      */
     public function startMeeting(Request $request)
     {
+        $user = $request->user();
+
         $data = $request->validate([
-            'selfie'    => ['required','image','mimes:jpeg,jpg,png','max:5120'],
-            'latitude'  => ['required','numeric','between:-90,90'],
-            'longitude' => ['required','numeric','between:-180,180'],
-            'lead_id'   => ['required','integer'],
+            'selfie'    => ['required', 'image', 'mimes:jpeg,jpg,png', 'max:5120'],
+            'latitude'  => ['required', 'numeric', 'between:-90,90'],
+            'longitude' => ['required', 'numeric', 'between:-180,180'],
+            'lead_id'   => ['required', 'integer'],
         ]);
 
         // check if meeting already exists
         $meeting = Meeting::where('lead_id', $request->lead_id)->where('meeting_end_time', null)->first();
         if ($meeting) {
             return response()->json(['message' => 'Meeting already exists'], 422);
+        }
+
+        // Upload selfie to S3 using ObjectUploadService
+        $uploader = new ObjectUploadService();
+
+        try {
+            $upload = $uploader->upload(
+                baseDirectory: 'shopphotos',                 
+                file: $request->file('selfie'),
+                userId: $user->id,
+                prefix: 'meeting_start',
+                options: [
+                    'disk' => 's3',
+                    'visibility' => 'private',             // signed URL returned
+                    'add_date_path' => true,
+                    'append_user_path' => true,
+                    'signed_ttl' => 10,
+                    // 'metadata' => ['lead_id' => (string)$data['lead_id']],
+                ]
+            );
+        } catch (\Throwable $e) {
+            Log::error('startMeeting: upload failed', ['error' => $e->getMessage()]);
+            return response()->json(['message' => 'Failed to upload selfie'], 500);
         }
 
         // Create new meeting
@@ -135,16 +161,17 @@ class MeetingController extends Controller
         $meeting->meeting_start_longitude = $data['longitude'];
         $meeting->save();
 
-        // Save start photo as a SHOP photo
-        $path = $request->file('selfie')->store('meetings/shop_photos', 'public');
+        // Save start photo as a SHOP photo (store the S3 key)
+        $path = $upload['key']; // S3 object key
         $meeting->shopPhotos()->create([
-            'media' => $path,
+            'media' => $path, // store S3 object key, not a public path
         ]);
 
         return response()->json([
             'message'    => 'Meeting started successfully.',
             'meeting_id' => $meeting->id,
             'shop_photo' => $path,
+            'selfie_url'  => $upload['url'],
         ]);
     }
 
@@ -153,16 +180,18 @@ class MeetingController extends Controller
      */
     public function endMeeting(Request $request)
     {
+        $user = $request->user();
+
         $data = $request->validate([
-            'selfie'    => ['required','image','mimes:jpeg,jpg,png','max:5120'],
-            'latitude'  => ['required','numeric','between:-90,90'],
-            'longitude' => ['required','numeric','between:-180,180'],
-            'lead_id'   => ['required','integer'],
-            'lead_status_id' => ['required','integer'],
+            'selfie'    => ['required', 'image', 'mimes:jpeg,jpg,png', 'max:5120'],
+            'latitude'  => ['required', 'numeric', 'between:-90,90'],
+            'longitude' => ['required', 'numeric', 'between:-180,180'],
+            'lead_id'   => ['required', 'integer'],
+            'lead_status_id' => ['required', 'integer'],
             // Add 3pg support        
-            'recording' => ['required','file','mimes:mp3,3gp,mp4,aac,m4a,wav,ogg','max:30720'],
+            'recording' => ['required', 'file', 'mimes:mp3,3gp,mp4,aac,m4a,wav,ogg', 'max:30720'],
             // 'recording' => ['required','file'],
-            'notes' => ['nullable','string','max:1000'],
+            'notes' => ['nullable', 'string', 'max:1000'],
             'next_follow_up_date' => ['required', 'string'],
         ]);
 
@@ -174,6 +203,29 @@ class MeetingController extends Controller
             return response()->json(['message' => 'Meeting not found'], 422);
         }
 
+        // Upload selfie to S3 using ObjectUploadService
+        $uploader = new ObjectUploadService();
+
+        try {
+            $upload = $uploader->upload(
+                baseDirectory: 'selfies',                 // keep consistent with shifts
+                file: $request->file('selfie'),
+                userId: $user->id,
+                prefix: 'meeting_end',
+                options: [
+                    'disk' => 's3',
+                    'visibility' => 'private',             // signed URL returned
+                    'add_date_path' => true,
+                    'append_user_path' => true,
+                    'signed_ttl' => 10,
+                    // 'metadata' => ['lead_id' => (string)$data['lead_id']],
+                ]
+            );
+        } catch (\Throwable $e) {
+            Log::error('startMeeting: upload failed', ['error' => $e->getMessage()]);
+            return response()->json(['message' => 'Failed to upload selfie'], 500);
+        }
+
         // Update meeting end time
         $meeting->meeting_end_time = now();
         $meeting->meeting_end_latitude = $data['latitude'];
@@ -182,18 +234,39 @@ class MeetingController extends Controller
         $meeting->save();
 
         // Save end selfie as a SELFIE
-        $path = $request->file('selfie')->store('meetings/selfies', 'public');
+        $path = $upload['key']; // S3 object key
         $meeting->selfies()->create([
             'media' => $path,
         ]);
 
-        // Save recording if attached
-        if ($request->hasFile('recording')) {
-            $recPath = $request->file('recording')->store('meetings/recordings', 'public');
-            $meeting->recordedAudios()->create([
-                'media' => $recPath,
-            ]);
+        // Upload recording to S3 using ObjectUploadService
+        $recordingUploader = new ObjectUploadService();
+
+        try {
+            $recordingUpload = $recordingUploader->upload(
+                baseDirectory: 'recordings',
+                file: $request->file('recording'),
+                userId: $user->id,
+                prefix: 'voice',
+                options: [
+                    'disk' => 's3',
+                    'visibility' => 'private',
+                    'add_date_path' => true,
+                    'append_user_path' => true,
+                    'signed_ttl' => 10,
+                    // 'metadata' => ['lead_id' => (string)$data['lead_id']],
+                ]
+            );
+        } catch (\Throwable $e) {
+            Log::error('endMeeting: recording upload failed', ['error' => $e->getMessage()]);
+            return response()->json(['message' => 'Failed to upload recording'], 500);
         }
+
+        // Save recording as RECORDED AUDIO
+        $recPath = $recordingUpload['key']; // S3 object key
+        $meeting->recordedAudios()->create([
+            'media' => $recPath,
+        ]);
 
         // Current Lead Status
         $lead = Lead::find($request->lead_id);
@@ -225,5 +298,4 @@ class MeetingController extends Controller
             'selfie'     => $path,
         ]);
     }
-
 }

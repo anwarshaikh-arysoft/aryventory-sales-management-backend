@@ -24,6 +24,49 @@ const sidebarNavItems: NavItem[] = [
     },
 ];
 
+const adminSidebarNavItems: NavItem[] = [
+    {
+        title: 'Business Types',
+        href: '/admin/settings/business-types',
+        icon: null,
+    },
+    {
+        title: 'Current Systems',
+        href: '/admin/settings/current-systems',
+        icon: null,
+    },
+    {
+        title: 'Groups',
+        href: '/admin/settings/groups',
+        icon: null,
+    },
+    {
+        title: 'Lead Status',
+        href: '/admin/settings/lead-status',
+        icon: null,
+    },
+    {
+        title: 'Plans',
+        href: '/admin/settings/plans',
+        icon: null,
+    },
+    {
+        title: 'Preferences',
+        href: '/admin/settings/preferences',
+        icon: null,
+    },
+    {
+        title: 'Roles',
+        href: '/admin/settings/roles',
+        icon: null,
+    },
+    {
+        title: 'Targets',
+        href: '/admin/settings/targets',
+        icon: null,
+    },
+];
+
 export default function SettingsLayout({ children }: PropsWithChildren) {
     // When server-side rendering, we only render the layout on the client...
     if (typeof window === 'undefined') {
@@ -31,15 +74,19 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
     }
 
     const currentPath = window.location.pathname;
+    const isAdminSettings = currentPath.startsWith('/admin/settings');
+    const navItems = isAdminSettings ? adminSidebarNavItems : sidebarNavItems;
+    const title = isAdminSettings ? 'Admin Settings' : 'Settings';
+    const description = isAdminSettings ? 'Manage system configuration and data' : 'Manage your profile and account settings';
 
     return (
         <div className="px-4 py-6">
-            <Heading title="Settings" description="Manage your profile and account settings" />
+            <Heading title={title} description={description} />
 
-            <div className="flex flex-col space-y-8 lg:flex-row lg:space-y-0 lg:space-x-12">
+            <div className="flex flex-col space-y-8 lg:flex-row lg:space-y-0 lg:space-x-12 mt-6">
                 <aside className="w-full max-w-xl lg:w-48">
                     <nav className="flex flex-col space-y-1 space-x-0">
-                        {sidebarNavItems.map((item, index) => (
+                        {navItems.map((item, index) => (
                             <Button
                                 key={`${item.href}-${index}`}
                                 size="sm"
@@ -59,8 +106,8 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
 
                 <Separator className="my-6 md:hidden" />
 
-                <div className="flex-1 md:max-w-2xl">
-                    <section className="max-w-xl space-y-12">{children}</section>
+                <div className="flex-1 md:max-w-full">
+                    <section className={cn("space-y-12", isAdminSettings ? "max-w-6xl" : "max-w-xl")}>{children}</section>
                 </div>
             </div>
         </div>

@@ -32,6 +32,43 @@ Route::middleware(['auth', 'role:Admin'])->group(function () {
     Route::get('/admin-panel', function () {
         return view('admin.panel');
     });
+
+    // Admin Settings Routes
+    Route::get('/admin/settings', function () {
+        return Inertia::render('admin/settings/index');
+    })->name('admin.settings.index');
+
+    Route::get('/admin/settings/business-types', function () {
+        return Inertia::render('admin/settings/business-types');
+    })->name('admin.settings.business-types');
+
+    Route::get('/admin/settings/current-systems', function () {
+        return Inertia::render('admin/settings/current-systems');
+    })->name('admin.settings.current-systems');
+
+    Route::get('/admin/settings/groups', function () {
+        return Inertia::render('admin/settings/groups');
+    })->name('admin.settings.groups');
+
+    Route::get('/admin/settings/lead-status', function () {
+        return Inertia::render('admin/settings/lead-status');
+    })->name('admin.settings.lead-status');
+
+    Route::get('/admin/settings/plans', function () {
+        return Inertia::render('admin/settings/plans');
+    })->name('admin.settings.plans');
+
+    Route::get('/admin/settings/preferences', function () {
+        return Inertia::render('admin/settings/preferences');
+    })->name('admin.settings.preferences');
+
+    Route::get('/admin/settings/roles', function () {
+        return Inertia::render('admin/settings/roles');
+    })->name('admin.settings.roles');
+
+    Route::get('/admin/settings/targets', function () {
+        return Inertia::render('admin/settings/targets');
+    })->name('admin.settings.targets');
 });
 
 
