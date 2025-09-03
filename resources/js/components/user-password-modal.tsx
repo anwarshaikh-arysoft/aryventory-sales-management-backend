@@ -185,3 +185,4 @@ export default function UserPasswordModal({ isOpen, onClose, onSuccess, user }: 
         </Dialog>
     );
 }
+

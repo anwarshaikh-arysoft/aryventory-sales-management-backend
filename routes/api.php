@@ -9,9 +9,11 @@ use App\Http\Controllers\Api\StatsController;
 use App\Http\Controllers\Api\ShiftController;
 use App\Http\Controllers\Api\UserPreferencesController;
 use App\Http\Controllers\Api\LeadStatusController;
+use App\Http\Controllers\Api\DashboardController;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Auth;
 use PHPOpenSourceSaver\JWTAuth\Facades\JWTAuth;
 
 // GET|HEAD        api/roles ................................................... roles.index › Api\RoleController@index
@@ -139,6 +141,14 @@ Route::apiResource('shop-photos-meeting', App\Http\Controllers\Api\ShopPhotoForM
 
 Route::get('leads-form-options', [App\Http\Controllers\Api\LeadController::class, 'getFormOptions']);
 Route::get('leads-count', [App\Http\Controllers\Api\LeadController::class, 'getLeadsCount']);
+
+// Dashboard APIs
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/dashboard/overview', [DashboardController::class, 'overview']);
+    Route::get('/dashboard/shift-locations', [DashboardController::class, 'shiftLocations']);
+    Route::get('/dashboard/revenue-breakdown', [DashboardController::class, 'revenueBreakdown']);
+    Route::get('/dashboard/user-performance', [DashboardController::class, 'userPerformance']);
+});
 
 Route::get('dashboard', function () {
     return response()->json(['message' => 'Welcome Admin or Manager']);

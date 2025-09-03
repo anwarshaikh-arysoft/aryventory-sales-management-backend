@@ -33,6 +33,9 @@ class LeadController extends Controller
             'leadStatusData'
         ]);
 
+        // Log the incoming request parameters for debugging
+        Log::info('LeadController@index called with parameters: ', $request->all());
+
         // Filtering
         if ($request->filled('shop_name')) {
             $query->where(function ($q) use ($request) {

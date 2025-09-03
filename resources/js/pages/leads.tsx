@@ -132,7 +132,7 @@ export default function Leads(props: LeadsPageProps) {
 
             const response = await axios.get(`/api/leads?${params.toString()}`);
             console.log(`/api/leads?${params.toString()}`);
-            setLeads(response.data);
+            setLeads(response.data);            
         } catch (error) {
             console.error("Error fetching leads:", error);
         }
@@ -155,10 +155,11 @@ export default function Leads(props: LeadsPageProps) {
 
     useEffect(() => {
         fetchLeads();
+        console.log('Fetched Leads' + leads);
     }, [currentPage, perPage, searchTerm, selectedStatus, selectedBusinessType, selectedAssignedTo, startDate, endDate]);
 
     useEffect(() => {
-        applyQuickFilter("this_month");
+        applyQuickFilter("last_3_months");
     }, []);
 
     const handleSearch = (value: string) => {

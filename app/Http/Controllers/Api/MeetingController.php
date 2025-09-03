@@ -135,7 +135,7 @@ class MeetingController extends Controller
 
         try {
             $upload = $uploader->upload(
-                baseDirectory: 'shopphotos',                 
+                baseDirectory: 'shopphotos',
                 file: $request->file('selfie'),
                 userId: $user->id,
                 prefix: 'meeting_start',
@@ -188,11 +188,12 @@ class MeetingController extends Controller
             'longitude' => ['required', 'numeric', 'between:-180,180'],
             'lead_id'   => ['required', 'integer'],
             'lead_status_id' => ['required', 'integer'],
+            'plan_interest' => ['nullable', 'string'],
             // Add 3pg support        
             'recording' => ['required', 'file', 'mimes:mp3,3gp,mp4,aac,m4a,wav,ogg', 'max:30720'],
             // 'recording' => ['required','file'],
             'notes' => ['nullable', 'string', 'max:1000'],
-            'next_follow_up_date' => ['required', 'string'],
+            'next_follow_up_date' => ['nullable', 'date'],
         ]);
 
         Log::info($data);
@@ -277,7 +278,8 @@ class MeetingController extends Controller
         // update lead status as per the lead_status_id
         $lead = Lead::find($request->lead_id);
         $lead->lead_status = $data['lead_status_id'];
-        $lead->next_follow_up_date = $data['next_follow_up_date'];
+        $lead->plan_interest = $data['plan_interest'];
+        $lead->next_follow_up_date = $data['next_follow_up_date'] ?? null;
         $lead->meeting_notes = $data['notes'];
         $lead->save();
 
