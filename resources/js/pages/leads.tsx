@@ -1,9 +1,10 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Users, CheckCircle, ExternalLink } from "lucide-react";
+import { Users, CheckCircle, ExternalLink, Clock, Eye } from "lucide-react";
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 import Heading from '@/components/heading';
 import AppLayout from '@/layouts/app-layout';
 import { type PaginatedResponse, type Lead, type LeadFormOptions } from '@/types';
@@ -14,6 +15,7 @@ import dayjs from "dayjs";
 import isoWeek from "dayjs/plugin/isoWeek";
 
 import LeadModal from '@/components/lead-modal';
+import UserShiftsModal from '@/components/user-shifts-modal';
 import { start } from 'repl';
 
 dayjs.extend(isoWeek);
@@ -36,6 +38,11 @@ export default function Leads(props: LeadsPageProps) {
     // Modal state
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingLead, setEditingLead] = useState<Lead | null>(null);
+
+    // Multi-select state
+    const [selectedLeads, setSelectedLeads] = useState<number[]>([]);
+    const [isShiftModalOpen, setIsShiftModalOpen] = useState(false);
+    const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
 
     // Lead Count state
     const [totalLeads, setTotalLeads] = useState(0);
@@ -203,6 +210,47 @@ export default function Leads(props: LeadsPageProps) {
         }
     };
 
+    const handleBulkDelete = async () => {
+        if (selectedLeads.length === 0) {
+            alert('Please select leads to delete.');
+            return;
+        }
+
+        if (confirm(`Are you sure you want to delete ${selectedLeads.length} selected lead(s)?`)) {
+            try {
+                await axios.delete('/api/leads-bulk', {
+                    data: { lead_ids: selectedLeads }
+                });
+                setSelectedLeads([]);
+                fetchLeads(); // Refresh the list
+            } catch (error) {
+                console.error('Error bulk deleting leads:', error);
+                alert('Error deleting leads. Please try again.');
+            }
+        }
+    };
+
+    const handleSelectLead = (leadId: number, checked: boolean) => {
+        if (checked) {
+            setSelectedLeads(prev => [...prev, leadId]);
+        } else {
+            setSelectedLeads(prev => prev.filter(id => id !== leadId));
+        }
+    };
+
+    const handleSelectAll = (checked: boolean) => {
+        if (checked && leads) {
+            setSelectedLeads(leads.data.map(lead => lead.id));
+        } else {
+            setSelectedLeads([]);
+        }
+    };
+
+    const handleViewShifts = (userId: number) => {
+        setSelectedUserId(userId);
+        setIsShiftModalOpen(true);
+    };
+
     const handleModalClose = () => {
         setIsModalOpen(false);
         setEditingLead(null);
@@ -295,10 +343,22 @@ export default function Leads(props: LeadsPageProps) {
 
                 <div className="flex items-center justify-between">
                     <Heading title="Leads Management" />
-                    <Button onClick={handleAddLead} className="flex items-center gap-2">
-                        <Plus className="h-4 w-4" />
-                        Add Lead
-                    </Button>
+                    <div className="flex items-center gap-2">
+                        {selectedLeads.length > 0 && (
+                            <Button 
+                                onClick={handleBulkDelete} 
+                                variant="destructive" 
+                                className="flex items-center gap-2"
+                            >
+                                <Trash2 className="h-4 w-4" />
+                                Delete Selected ({selectedLeads.length})
+                            </Button>
+                        )}
+                        <Button onClick={handleAddLead} className="flex items-center gap-2">
+                            <Plus className="h-4 w-4" />
+                            Add Lead
+                        </Button>
+                    </div>
                 </div>
 
                 <Card>
@@ -347,7 +407,7 @@ export default function Leads(props: LeadsPageProps) {
                                         key={type}
                                         variant={filterType === type ? "default" : "outline"}
                                         size="sm"
-                                        onClick={() => applyQuickFilter(type)}
+                                        onClick={() => applyQuickFilter(type as QuickFilterType)}
                                         className="flex-1 sm:flex-none"
                                     >
                                         {label}
@@ -425,6 +485,12 @@ export default function Leads(props: LeadsPageProps) {
                                         <table className="w-full">
                                             <thead className="border-b bg-muted/50">
                                                 <tr>
+                                                    <th className="p-3 text-left font-medium">
+                                                        <Checkbox 
+                                                            checked={leads.data.length > 0 && selectedLeads.length === leads.data.length}
+                                                            onCheckedChange={handleSelectAll}
+                                                        />
+                                                    </th>
                                                     <th className="p-3 text-left font-medium">Create On</th>
                                                     <th className="p-3 text-left font-medium">Shop Details</th>
                                                     <th className="p-3 text-left font-medium">Contact</th>
@@ -432,12 +498,19 @@ export default function Leads(props: LeadsPageProps) {
                                                     <th className="p-3 text-left font-medium">Status & Rating</th>
                                                     <th className="p-3 text-left font-medium">Assigned To</th>
                                                     <th className="p-3 text-left font-medium">Next Follow-up</th>
+                                                    <th className="p-3 text-left font-medium">Completed On</th>
                                                     <th className="p-3 text-right font-medium">Actions</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 {leads.data.map((lead) => (
                                                     <tr key={lead.id} className="border-b hover:bg-muted/25">
+                                                        <td className="p-3">
+                                                            <Checkbox 
+                                                                checked={selectedLeads.includes(lead.id)}
+                                                                onCheckedChange={(checked) => handleSelectLead(lead.id, checked as boolean)}
+                                                            />
+                                                        </td>
                                                         <td className="p-3">
                                                             <div className="text-sm">
                                                                 {formatDate(lead.created_at)}
@@ -523,9 +596,25 @@ export default function Leads(props: LeadsPageProps) {
                                                                 {formatDate(lead.next_follow_up_date)}
                                                             </div>
                                                         </td>
+                                                        <td className="p-3">
+                                                            <div className="text-sm">
+                                                                {formatDate(lead.completed_at)}
+                                                            </div>
+                                                        </td>
 
                                                         <td className="p-3">
                                                             <div className="flex items-center justify-end gap-2">
+                                                                {lead.assigned_to_user && (
+                                                                    <Button
+                                                                        variant="ghost"
+                                                                        size="sm"
+                                                                        onClick={() => handleViewShifts(lead.assigned_to_user!.id)}
+                                                                        className="h-8 w-8 p-0 text-blue-600 hover:text-blue-800"
+                                                                        title="View user shifts"
+                                                                    >
+                                                                        <Clock className="h-4 w-4" />
+                                                                    </Button>
+                                                                )}
                                                                 <Button
                                                                     variant="ghost"
                                                                     size="sm"
@@ -635,6 +724,16 @@ export default function Leads(props: LeadsPageProps) {
                     formOptions={formOptions}
                 />
             )}
+
+            {/* User Shifts Modal */}
+            <UserShiftsModal
+                isOpen={isShiftModalOpen}
+                onClose={() => {
+                    setIsShiftModalOpen(false);
+                    setSelectedUserId(null);
+                }}
+                userId={selectedUserId}
+            />
         </AppLayout>
     );
 }

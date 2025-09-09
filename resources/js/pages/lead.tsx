@@ -7,8 +7,14 @@ import { type Lead, type LeadHistory } from '@/types';
 import axios from 'axios';
 import { useEffect, useMemo, useState } from 'react';
 import dayjs from 'dayjs';
-import { Mail, MapPin, Phone, Star, User2, CalendarDays, Clock, GitCommit, Handshake, SquareStack, FileStack, Headset, Calendar, Download } from 'lucide-react';
+import { Mail, MapPin, Phone, Star, User2, CalendarDays, Clock, GitCommit, Handshake, SquareStack, FileStack, Headset, Calendar, Download, Edit2, Trash2, MoreVertical } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger, } from '@/components/ui/accordion';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 
 interface LeadPageProps {
   leadId: number;
@@ -17,8 +23,19 @@ interface LeadPageProps {
 export default function LeadPage({ leadId }: LeadPageProps) {
   const [lead, setLead] = useState<Lead | null>(null);
   const [loading, setLoading] = useState(true);
-
   const [error, setError] = useState<string | null>(null);
+  
+  // Dialog states
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [selectedMeeting, setSelectedMeeting] = useState<any>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Edit form state
+  const [editFormData, setEditFormData] = useState({
+    meeting_start_time: '',
+    meeting_end_time: '',
+  });
 
   const storageUrl = 'https://sales-aryventory.s3.ap-south-1.amazonaws.com/'
 
@@ -71,6 +88,69 @@ export default function LeadPage({ leadId }: LeadPageProps) {
 
   const formatDate = (value?: string | null) => (value ? dayjs(value).format('DD MMM YYYY') : '-');
   const formatDateTime = (value?: string | null) => (value ? dayjs(value).format('DD MMM YYYY, HH:mm') : '-');
+
+  // Handle opening edit dialog
+  const handleEditMeeting = (meeting: any) => {
+    setSelectedMeeting(meeting);
+    setEditFormData({
+      meeting_start_time: meeting.meeting_start_time ? dayjs(meeting.meeting_start_time).format('YYYY-MM-DDTHH:mm') : '',
+      meeting_end_time: meeting.meeting_end_time ? dayjs(meeting.meeting_end_time).format('YYYY-MM-DDTHH:mm') : '',
+    });
+    setEditDialogOpen(true);
+  };
+
+  // Handle opening delete dialog
+  const handleDeleteMeeting = (meeting: any) => {
+    setSelectedMeeting(meeting);
+    setDeleteDialogOpen(true);
+  };
+
+  // Handle edit meeting submission
+  const handleEditSubmit = async () => {
+    if (!selectedMeeting) return;
+    
+    setIsSubmitting(true);
+    try {
+      await axios.put(`/api/meetings/${selectedMeeting.id}`, {
+        meeting_start_time: editFormData.meeting_start_time,
+        meeting_end_time: editFormData.meeting_end_time || null,
+      });
+      
+      // Refresh lead data
+      const res = await axios.get(`/api/leads/${leadId}`);
+      setLead(res.data as Lead);
+      
+      setEditDialogOpen(false);
+      setSelectedMeeting(null);
+    } catch (error) {
+      console.error('Failed to update meeting:', error);
+      setError('Failed to update meeting');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Handle delete meeting submission
+  const handleDeleteSubmit = async () => {
+    if (!selectedMeeting) return;
+    
+    setIsSubmitting(true);
+    try {
+      await axios.delete(`/api/meetings/${selectedMeeting.id}`);
+      
+      // Refresh lead data
+      const res = await axios.get(`/api/leads/${leadId}`);
+      setLead(res.data as Lead);
+      
+      setDeleteDialogOpen(false);
+      setSelectedMeeting(null);
+    } catch (error) {
+      console.error('Failed to delete meeting:', error);
+      setError('Failed to delete meeting');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <AppLayout
@@ -182,13 +262,37 @@ export default function LeadPage({ leadId }: LeadPageProps) {
                     {sortedMeetings.map((m, idx) => (
                       <AccordionItem key={m.id ?? idx} value={`meeting-${m.id}`}>
                         <AccordionTrigger>
-                          <div className="flex flex-col text-left">
-                            <span className="text-sm font-medium">
-                              Meeting #{m.id} — {formatDateTime(m.meeting_start_time)}
-                            </span>
-                            <span className="text-xs text-muted-foreground flex items-center gap-1 mt-2">
-                              <Clock size={12} /> {formatDateTime(m.meeting_start_time)} → {formatDateTime(m.meeting_end_time)}
-                            </span>
+                          <div className="flex flex-1 items-center justify-between">
+                            <div className="flex flex-col text-left">
+                              <span className="text-sm font-medium">
+                                Meeting #{m.id} — {formatDateTime(m.meeting_start_time)}
+                              </span>
+                              <span className="text-xs text-muted-foreground flex items-center gap-1 mt-2">
+                                <Clock size={12} /> {formatDateTime(m.meeting_start_time)} → {formatDateTime(m.meeting_end_time)}
+                              </span>
+                            </div>
+                            <div className="mr-2" onClick={(e) => e.stopPropagation()}>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                    <MoreVertical className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuItem onClick={() => handleEditMeeting(m)}>
+                                    <Edit2 className="mr-2 h-4 w-4" />
+                                    Edit
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem 
+                                    onClick={() => handleDeleteMeeting(m)}
+                                    className="text-red-600 focus:text-red-600"
+                                  >
+                                    <Trash2 className="mr-2 h-4 w-4" />
+                                    Delete
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </div>
                           </div>
                         </AccordionTrigger>
                         <AccordionContent>
@@ -199,7 +303,7 @@ export default function LeadPage({ leadId }: LeadPageProps) {
                               <div>
                                 <div className="font-medium text-sm mb-1">Recorded Audios:</div>
                                 <ul className="list-disc list-inside text-sm">
-                                  {m.recorded_audios.map((audio) => {
+                                  {m.recorded_audios.map((audio: any) => {
                                     const ext = audio.media.split('.').pop()?.toLowerCase();
 
                                     // If it's 3gp (less supported), show a download link fallback
@@ -232,7 +336,7 @@ export default function LeadPage({ leadId }: LeadPageProps) {
                               <div>
                                 <div className="font-medium text-sm mb-1">Selfies:</div>
                                 <div className="flex gap-2 flex-wrap">
-                                  {m.selfies.map((selfie) => (
+                                  {m.selfies.map((selfie: any) => (
                                     <img
                                       key={selfie.id}
                                       src={storageUrl + selfie.media}
@@ -249,7 +353,7 @@ export default function LeadPage({ leadId }: LeadPageProps) {
                               <div>
                                 <div className="font-medium text-sm mb-1">Shop Photos:</div>
                                 <div className="flex gap-2 flex-wrap">
-                                  {m.shop_photos.map((photo) => (
+                                  {m.shop_photos.map((photo: any) => (
                                     <img
                                       key={photo.id}
                                       src={storageUrl + photo.media}
@@ -314,6 +418,76 @@ export default function LeadPage({ leadId }: LeadPageProps) {
             </div>
           </div>
         )}
+
+        {/* Edit Meeting Dialog */}
+        <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Edit Meeting</DialogTitle>
+              <DialogDescription>
+                Update the meeting start and end times.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <Label htmlFor="meeting_start_time">Meeting Start Time</Label>
+                <Input
+                  id="meeting_start_time"
+                  type="datetime-local"
+                  value={editFormData.meeting_start_time}
+                  onChange={(e) => setEditFormData({ ...editFormData, meeting_start_time: e.target.value })}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="meeting_end_time">Meeting End Time</Label>
+                <Input
+                  id="meeting_end_time"
+                  type="datetime-local"
+                  value={editFormData.meeting_end_time}
+                  onChange={(e) => setEditFormData({ ...editFormData, meeting_end_time: e.target.value })}
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setEditDialogOpen(false)} disabled={isSubmitting}>
+                Cancel
+              </Button>
+              <Button onClick={handleEditSubmit} disabled={isSubmitting}>
+                {isSubmitting ? 'Saving...' : 'Save Changes'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Delete Meeting Dialog */}
+        <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Delete Meeting</DialogTitle>
+              <DialogDescription>
+                Are you sure you want to delete this meeting? This action cannot be undone and will remove all associated media files.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="py-4">
+              {selectedMeeting && (
+                <div className="p-4 bg-muted rounded-md">
+                  <p className="text-sm font-medium">Meeting #{selectedMeeting.id}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {formatDateTime(selectedMeeting.meeting_start_time)} → {formatDateTime(selectedMeeting.meeting_end_time)}
+                  </p>
+                </div>
+              )}
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setDeleteDialogOpen(false)} disabled={isSubmitting}>
+                Cancel
+              </Button>
+              <Button variant="destructive" onClick={handleDeleteSubmit} disabled={isSubmitting}>
+                {isSubmitting ? 'Deleting...' : 'Delete Meeting'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </AppLayout>
   );

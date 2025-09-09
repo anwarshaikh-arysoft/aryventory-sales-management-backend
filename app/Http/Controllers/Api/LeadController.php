@@ -261,7 +261,7 @@ class LeadController extends Controller
         ]);
 
         // Update the last_updated_by
-        $validated['last_updated_by'] = auth()->user()->id ?? 1;
+        $validated['last_updated_by'] = auth('sanctum')->id() ?? 1;
 
         // Check if status changed before updating
         $statusBeforeId = $lead->lead_status;
@@ -274,7 +274,7 @@ class LeadController extends Controller
         if ($statusBeforeId !== $statusAfterId) {
             LeadHistory::create([
                 'lead_id'       => $lead->id,
-                'updated_by'    => auth()->id() ?? 1,
+                'updated_by'    => auth('sanctum')->id() ?? 1,
                 'action'        => $validated['action'] ?? 'Update',
                 'status_before' => LeadStatus::where('id', $statusBeforeId)->value('name'),
                 'status_after'  => LeadStatus::where('id', $statusAfterId)->value('name'),
@@ -307,6 +307,32 @@ class LeadController extends Controller
     }
 
     /**
+     * Bulk delete leads
+     */
+    public function bulkDestroy(Request $request)
+    {
+        $request->validate([
+            'lead_ids' => 'required|array|min:1',
+            'lead_ids.*' => 'exists:leads,id'
+        ]);
+
+        try {
+            $deletedCount = Lead::whereIn('id', $request->lead_ids)->delete();
+            
+            return response()->json([
+                'message' => "Successfully deleted {$deletedCount} lead(s)",
+                'deleted_count' => $deletedCount
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error bulk deleting leads: ' . $e->getMessage());
+            return response()->json([
+                'message' => 'Failed to delete leads',
+                'error' => app()->isProduction() ? null : $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
      * Get dropdown options for lead form
      */
     public function getFormOptions()
@@ -318,4 +344,6 @@ class LeadController extends Controller
             'users' => User::select('id', 'name', 'email')->get(),
         ]);
     }
+
+
 }

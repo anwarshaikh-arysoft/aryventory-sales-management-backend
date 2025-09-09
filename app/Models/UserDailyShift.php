@@ -26,6 +26,18 @@ class UserDailyShift extends Model
         'shift_end_longitude',
     ];
 
+    protected $casts = [
+        'shift_start' => 'datetime',
+        'shift_end' => 'datetime',
+        'break_start' => 'datetime',
+        'break_end' => 'datetime',
+        'shift_start_latitude' => 'float',
+        'shift_start_longitude' => 'float',
+        'shift_end_latitude' => 'float',
+        'shift_end_longitude' => 'float',
+        'total_break_mins' => 'integer',
+    ];
+
     public function user()
     {
         return $this->belongsTo(User::class);

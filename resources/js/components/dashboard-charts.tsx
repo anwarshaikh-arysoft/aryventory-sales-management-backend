@@ -263,3 +263,4 @@ export const RevenueTrendChart: React.FC<RevenueTrendChartProps> = ({
     </div>
   );
 };
+

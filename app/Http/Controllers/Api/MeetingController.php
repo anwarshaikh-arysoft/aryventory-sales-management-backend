@@ -190,7 +190,7 @@ class MeetingController extends Controller
             'lead_status_id' => ['required', 'integer'],
             'plan_interest' => ['nullable', 'string'],
             // Add 3pg support        
-            'recording' => ['required', 'file', 'mimes:mp3,3gp,mp4,aac,m4a,wav,ogg', 'max:30720'],
+            'recording' => ['nullable', 'file', 'mimes:mp3,3gp,mp4,aac,m4a,wav,ogg', 'max:30720'],
             // 'recording' => ['required','file'],
             'notes' => ['nullable', 'string', 'max:1000'],
             'next_follow_up_date' => ['nullable', 'date'],
@@ -260,21 +260,33 @@ class MeetingController extends Controller
             );
         } catch (\Throwable $e) {
             Log::error('endMeeting: recording upload failed', ['error' => $e->getMessage()]);
-            return response()->json(['message' => 'Failed to upload recording'], 500);
+            // return response()->json(['message' => 'Failed to upload recording'], 500);
         }
 
+        try {
         // Save recording as RECORDED AUDIO
         $recPath = $recordingUpload['key']; // S3 object key
         $meeting->recordedAudios()->create([
-            'media' => $recPath,
-        ]);
+                'media' => $recPath,
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('endMeeting: recording save failed', ['error' => $e->getMessage()]);
+            // return response()->json(['message' => 'Failed to save recording'], 500);
+        }
 
         // Current Lead Status
         $lead = Lead::find($request->lead_id);
         $leadStatusId = $lead->lead_status;
-        $currentLeadStatus = LeadStatus::find($leadStatusId)->name;
-        $newLeadStatus = LeadStatus::find($data['lead_status_id'])->name;
 
+        try {
+            $currentLeadStatus = LeadStatus::find($leadStatusId)->name;
+        } catch (\Throwable $e) {
+            Log::error('endMeeting: current lead status not found', ['error' => $e->getMessage()]);
+            $currentLeadStatus = 'Unknown';
+        }
+
+        $newLeadStatus = LeadStatus::find($data['lead_status_id'])->name;
+        
         // update lead status as per the lead_status_id
         $lead = Lead::find($request->lead_id);
         $lead->lead_status = $data['lead_status_id'];
@@ -282,6 +294,14 @@ class MeetingController extends Controller
         $lead->next_follow_up_date = $data['next_follow_up_date'] ?? null;
         $lead->meeting_notes = $data['notes'];
         $lead->save();
+
+        try {
+        if ($newLeadStatus == 'Sold' || $newLeadStatus == 'Closed') {
+            $lead->completed_at = now();
+            $lead->save();
+        }} catch (\Throwable $e) {
+            Log::error('endMeeting: lead completion date update failed', ['error' => $e->getMessage()]);
+        }
 
         // Update LeadHistory
         $leadHistory = new LeadHistory();

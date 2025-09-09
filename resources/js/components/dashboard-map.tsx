@@ -126,3 +126,4 @@ const DashboardMap: React.FC<DashboardMapProps> = ({ locations, height = '400px'
 };
 
 export default DashboardMap;
+

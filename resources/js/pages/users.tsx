@@ -8,11 +8,13 @@ import Heading from '@/components/heading';
 import AppLayout from '@/layouts/app-layout';
 import { type PaginatedResponse, type Role, type User } from '@/types';
 import { router, usePage } from '@inertiajs/react';
-import { Edit2, Plus, Search, Trash2, Key } from 'lucide-react';
+import { Edit2, Plus, Search, Trash2, Key, Clock, Users as UsersIcon, ExternalLink } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import UserModal from '@/components/user-modal';
 import UserPasswordModal from '@/components/user-password-modal';
+import AllUsersShiftsModal from '@/components/all-users-shifts-modal';
+import UserShiftsModal from '@/components/user-shifts-modal';
 
 interface UsersPageProps {
     // These will be passed from the backend
@@ -37,6 +39,14 @@ export default function Users(props: UsersPageProps) {
     // Password modal state
     const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
     const [passwordUser, setPasswordUser] = useState<User | null>(null);
+    
+    // Shifts modal state
+    const [isAllShiftsModalOpen, setIsAllShiftsModalOpen] = useState(false);
+    const [isUserShiftsModalOpen, setIsUserShiftsModalOpen] = useState(false);
+    const [selectedShiftUserId, setSelectedShiftUserId] = useState<number | null>(null);
+    
+    // Current shift status
+    const [currentShiftStatuses, setCurrentShiftStatuses] = useState<{[key: number]: any}>({});
     
     const fetchUsers = async () => {
         setLoading(true);
@@ -83,13 +93,35 @@ export default function Users(props: UsersPageProps) {
         }
     };
 
+    const fetchCurrentShiftStatuses = async () => {
+        try {
+            const response = await axios.get('/api/shift/current-status');
+            const statusMap: {[key: number]: any} = {};
+            response.data.current_shifts.forEach((status: any) => {
+                statusMap[status.user.id] = status;
+            });
+            setCurrentShiftStatuses(statusMap);
+        } catch (error) {
+            console.error('Error fetching current shift statuses:', error);
+        }
+    };
+
     useEffect(() => {
         fetchRolesAndGroups();
+        fetchCurrentShiftStatuses();
     }, []);
 
     useEffect(() => {
         fetchUsers();
     }, [currentPage, perPage, searchTerm, selectedRole, selectedGroup]);
+
+    // Refresh shift statuses every 30 seconds
+    useEffect(() => {
+        const interval = setInterval(() => {
+            fetchCurrentShiftStatuses();
+        }, 30000);
+        return () => clearInterval(interval);
+    }, []);
 
     const handleSearch = (value: string) => {
         setSearchTerm(value);
@@ -152,6 +184,25 @@ export default function Users(props: UsersPageProps) {
         handlePasswordModalClose();
     };
 
+    const handleViewAllShifts = () => {
+        setIsAllShiftsModalOpen(true);
+    };
+
+    const handleViewUserShifts = (userId: number) => {
+        setSelectedShiftUserId(userId);
+        setIsUserShiftsModalOpen(true);
+    };
+
+    const handleViewUserShiftsPage = (userId: number) => {
+        router.visit(`/users/${userId}/shifts`);
+    };
+
+    const handleShiftsModalClose = () => {
+        setIsAllShiftsModalOpen(false);
+        setIsUserShiftsModalOpen(false);
+        setSelectedShiftUserId(null);
+    };
+
     const generatePaginationItems = () => {
         if (!users) return [];
         
@@ -179,6 +230,24 @@ export default function Users(props: UsersPageProps) {
             .slice(0, 2);
     };
 
+    const getShiftStatusBadge = (userId: number) => {
+        const status = currentShiftStatuses[userId];
+        if (!status) {
+            return <Badge variant="outline" className="text-xs">Offline</Badge>;
+        }
+
+        const variants = {
+            active: { variant: 'default' as const, text: 'Working' },
+            break: { variant: 'secondary' as const, text: 'On Break' },
+            completed: { variant: 'outline' as const, text: 'Completed' },
+            offline: { variant: 'destructive' as const, text: 'Offline' }
+        };
+
+        const config = variants[status.status as keyof typeof variants] || variants.offline;
+        
+        return <Badge variant={config.variant} className="text-xs">{config.text}</Badge>;
+    };
+
     return (
         <AppLayout
             breadcrumbs={[
@@ -188,10 +257,16 @@ export default function Users(props: UsersPageProps) {
             <div className="flex h-full flex-1 flex-col gap-4 rounded-xl p-4 overflow-x-auto">
                 <div className="flex items-center justify-between">
                     <Heading title="Users Management" />
-                    <Button onClick={handleAddUser} className="flex items-center gap-2">
-                        <Plus className="h-4 w-4" />
-                        Add User
-                    </Button>
+                    <div className="flex items-center gap-2">
+                        <Button onClick={handleViewAllShifts} variant="outline" className="flex items-center gap-2">
+                            <UsersIcon className="h-4 w-4" />
+                            View All Shifts
+                        </Button>
+                        <Button onClick={handleAddUser} className="flex items-center gap-2">
+                            <Plus className="h-4 w-4" />
+                            Add User
+                        </Button>
+                    </div>
                 </div>
 
                 <Card>
@@ -263,6 +338,7 @@ export default function Users(props: UsersPageProps) {
                                                     <th className="p-3 text-left font-medium">Manager</th>
                                                     <th className="p-3 text-left font-medium">Designation</th>
                                                     <th className="p-3 text-left font-medium">Status</th>
+                                                    <th className="p-3 text-left font-medium">Shift Status</th>
                                                     <th className="p-3 text-right font-medium">Actions</th>
                                                 </tr>
                                             </thead>
@@ -322,7 +398,28 @@ export default function Users(props: UsersPageProps) {
                                                             </Badge>
                                                         </td>
                                                         <td className="p-3">
+                                                            {getShiftStatusBadge(user.id)}
+                                                        </td>
+                                                        <td className="p-3">
                                                             <div className="flex items-center justify-end gap-2">
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="sm"
+                                                                    onClick={() => handleViewUserShifts(user.id)}
+                                                                    className="h-8 w-8 p-0 text-blue-600 hover:text-blue-800"
+                                                                    title="View User Shifts (Modal)"
+                                                                >
+                                                                    <Clock className="h-4 w-4" />
+                                                                </Button>
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="sm"
+                                                                    onClick={() => handleViewUserShiftsPage(user.id)}
+                                                                    className="h-8 w-8 p-0 text-green-600 hover:text-green-800"
+                                                                    title="View Detailed Shifts Page"
+                                                                >
+                                                                    <ExternalLink className="h-4 w-4" />
+                                                                </Button>
                                                                 <Button
                                                                     variant="ghost"
                                                                     size="sm"
@@ -450,6 +547,19 @@ export default function Users(props: UsersPageProps) {
                 onClose={handlePasswordModalClose}
                 onSuccess={handlePasswordChanged}
                 user={passwordUser}
+            />
+
+            {/* All Users Shifts Modal */}
+            <AllUsersShiftsModal
+                isOpen={isAllShiftsModalOpen}
+                onClose={handleShiftsModalClose}
+            />
+
+            {/* Individual User Shifts Modal */}
+            <UserShiftsModal
+                isOpen={isUserShiftsModalOpen}
+                onClose={handleShiftsModalClose}
+                userId={selectedShiftUserId}
             />
         </AppLayout>
     );
