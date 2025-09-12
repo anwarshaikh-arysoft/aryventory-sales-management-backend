@@ -73,6 +73,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/shift/end-break', [ShiftController::class, 'endBreak']);
     Route::post('/shift/end', [ShiftController::class, 'endShift']);
     Route::get('/shift/status', [ShiftController::class, 'getShiftStatus']);
+    Route::get('/shift/breaks', [ShiftController::class, 'getBreaks']); // Get all breaks for current shift
+    Route::get('/shift/break-history', [ShiftController::class, 'getBreakHistory']); // Get break history
+    Route::put('/shift/breaks/{breakId}', [ShiftController::class, 'updateBreak']); // Update break details
+    Route::delete('/shift/breaks/{breakId}', [ShiftController::class, 'deleteBreak']); // Delete a break
     Route::get('/shift/user-shifts', [ShiftController::class, 'getUserShifts']); // For managers/admins
     Route::get('/shift/all-users-shifts', [ShiftController::class, 'getAllUsersShifts']); // For admin overview
     Route::get('/shift/current-status', [ShiftController::class, 'getAllUsersCurrentStatus']); // Current status of all users
@@ -173,4 +177,13 @@ Route::middleware(['auth:sanctum', 'role:Admin'])->group(function () {
     Route::apiResource('plans', App\Http\Controllers\Api\PlanController::class);
     Route::apiResource('preferences', App\Http\Controllers\Api\PreferenceController::class);
     Route::apiResource('targets', App\Http\Controllers\Api\TargetController::class);
+});
+
+
+Route::middleware(['auth:sanctum'])->group(function () {
+    Route::apiResource('business-types', App\Http\Controllers\Api\BusinessTypeController::class)->only(['index', 'show']);
+    Route::apiResource('current-systems', App\Http\Controllers\Api\CurrentSystemController::class)->only(['index', 'show']);
+    Route::apiResource('plans', App\Http\Controllers\Api\PlanController::class)->only(['index', 'show']);
+    Route::apiResource('preferences', App\Http\Controllers\Api\PreferenceController::class)->only(['index', 'show']);
+    Route::apiResource('targets', App\Http\Controllers\Api\TargetController::class)->only(['index', 'show']);
 });

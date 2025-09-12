@@ -10,8 +10,38 @@ use Illuminate\Validation\Rule;
 class UserController extends Controller
 {
     /**
-     * Display a listing of users.
-    */
+     * @OA\Get(
+     *     path="/api/users",
+     *     summary="Get users list",
+     *     description="Retrieve a paginated list of users with filtering options",
+     *     operationId="getUsersList",
+     *     tags={"Users"},
+     *     security={{"sanctum": {}}},
+     *     @OA\Parameter(
+     *         name="name",
+     *         in="query",
+     *         description="Filter by name, email, phone, or designation",
+     *         required=false,
+     *         @OA\Schema(type="string")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Users retrieved successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Users retrieved successfully"),
+     *             @OA\Property(
+     *                 property="users",
+     *                 type="object",
+     *                 @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/User"))
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthenticated"
+     *     )
+     * )
+     */
     public function index(Request $request)
     {
         $query = User::with(['role', 'group', 'manager']);

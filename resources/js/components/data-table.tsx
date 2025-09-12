@@ -127,7 +127,7 @@ export default function DataTable({
             case 'number':
                 return value?.toLocaleString() || '0';
             case 'currency':
-                return value ? `$${Number(value).toLocaleString()}` : '$0';
+                return value ? `₹${Number(value).toLocaleString()}` : '₹0';
             default:
                 return value || '-';
         }

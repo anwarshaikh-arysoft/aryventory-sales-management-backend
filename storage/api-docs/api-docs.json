@@ -1,0 +1,422 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "Aryventory Sales Management API",
+        "description": "API documentation for Aryventory Sales Management System",
+        "contact": {
+            "email": "admin@aryventory.com"
+        },
+        "license": {
+            "name": "Apache 2.0",
+            "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+        },
+        "version": "1.0.0"
+    },
+    "servers": [
+        {
+            "url": "http://localhost:8001",
+            "description": "API Server"
+        }
+    ],
+    "paths": {
+        "/api/shifts": {
+            "get": {
+                "tags": [
+                    "Shifts"
+                ],
+                "summary": "Get user shifts",
+                "description": "Retrieve all shifts for the authenticated user with pagination and filtering",
+                "operationId": "showShifts",
+                "parameters": [
+                    {
+                        "name": "filter",
+                        "in": "query",
+                        "description": "Filter shifts by date",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "today",
+                                "this_week",
+                                "custom"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "start_date",
+                        "in": "query",
+                        "description": "Start date for custom filter (YYYY-MM-DD)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "end_date",
+                        "in": "query",
+                        "description": "End date for custom filter (YYYY-MM-DD)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User shifts retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "User shifts retrieved successfully."
+                                        },
+                                        "shifts": {
+                                            "properties": {
+                                                "current_page": {
+                                                    "type": "integer"
+                                                },
+                                                "data": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "$ref": "#/components/schemas/UserDailyShift"
+                                                    }
+                                                },
+                                                "total": {
+                                                    "type": "integer"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/shifts/start": {
+            "post": {
+                "tags": [
+                    "Shifts"
+                ],
+                "summary": "Start a shift",
+                "description": "Start a new shift for the authenticated user",
+                "operationId": "startShift",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "properties": {
+                                    "selfie": {
+                                        "description": "Selfie image",
+                                        "type": "string",
+                                        "format": "binary"
+                                    },
+                                    "latitude": {
+                                        "description": "Location latitude",
+                                        "type": "number",
+                                        "format": "float"
+                                    },
+                                    "longitude": {
+                                        "description": "Location longitude",
+                                        "type": "number",
+                                        "format": "float"
+                                    },
+                                    "address": {
+                                        "description": "Location address",
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Shift started successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Shift started successfully."
+                                        },
+                                        "shift": {
+                                            "$ref": "#/components/schemas/UserDailyShift"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request - Shift already started or validation failed"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/users": {
+            "get": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Get users list",
+                "description": "Retrieve a paginated list of users with filtering options",
+                "operationId": "getUsersList",
+                "parameters": [
+                    {
+                        "name": "name",
+                        "in": "query",
+                        "description": "Filter by name, email, phone, or designation",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Users retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Users retrieved successfully"
+                                        },
+                                        "users": {
+                                            "properties": {
+                                                "data": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "$ref": "#/components/schemas/User"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "User": {
+                "title": "User",
+                "description": "User model",
+                "properties": {
+                    "id": {
+                        "description": "User ID",
+                        "type": "integer"
+                    },
+                    "name": {
+                        "description": "User name",
+                        "type": "string"
+                    },
+                    "email": {
+                        "description": "User email",
+                        "type": "string",
+                        "format": "email"
+                    },
+                    "phone": {
+                        "description": "User phone number",
+                        "type": "string"
+                    },
+                    "designation": {
+                        "description": "User designation",
+                        "type": "string"
+                    },
+                    "role_id": {
+                        "description": "User role ID",
+                        "type": "integer"
+                    },
+                    "group_id": {
+                        "description": "User group ID",
+                        "type": "integer"
+                    },
+                    "manager_id": {
+                        "description": "User manager ID",
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "email_verified_at": {
+                        "description": "Email verified timestamp",
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "description": "Created timestamp",
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "description": "Updated timestamp",
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "UserDailyShift": {
+                "title": "User Daily Shift",
+                "description": "User daily shift model",
+                "properties": {
+                    "id": {
+                        "description": "Shift ID",
+                        "type": "integer"
+                    },
+                    "user_id": {
+                        "description": "User ID",
+                        "type": "integer"
+                    },
+                    "shift_date": {
+                        "description": "Shift date",
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "shift_start": {
+                        "description": "Shift start time",
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "shift_end": {
+                        "description": "Shift end time",
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "break_start": {
+                        "description": "Break start time",
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "break_end": {
+                        "description": "Break end time",
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "total_break_mins": {
+                        "description": "Total break minutes",
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "notes": {
+                        "description": "Shift notes",
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "shift_start_selfie_image": {
+                        "description": "Start shift selfie image URL",
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "shift_end_selfie_image": {
+                        "description": "End shift selfie image URL",
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "shift_start_latitude": {
+                        "description": "Start location latitude",
+                        "type": "number",
+                        "format": "float",
+                        "nullable": true
+                    },
+                    "shift_start_longitude": {
+                        "description": "Start location longitude",
+                        "type": "number",
+                        "format": "float",
+                        "nullable": true
+                    },
+                    "shift_end_latitude": {
+                        "description": "End location latitude",
+                        "type": "number",
+                        "format": "float",
+                        "nullable": true
+                    },
+                    "shift_end_longitude": {
+                        "description": "End location longitude",
+                        "type": "number",
+                        "format": "float",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "description": "Created timestamp",
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "description": "Updated timestamp",
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            }
+        },
+        "securitySchemes": {
+            "sanctum": {
+                "type": "apiKey",
+                "description": "Enter token in format (Bearer <token>)",
+                "name": "Authorization",
+                "in": "header"
+            },
+            "0": {
+                "sanctum": []
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Shifts",
+            "description": "Shifts"
+        },
+        {
+            "name": "Users",
+            "description": "Users"
+        }
+    ]
+}
