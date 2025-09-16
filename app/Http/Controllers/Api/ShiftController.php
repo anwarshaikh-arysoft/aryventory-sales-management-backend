@@ -445,7 +445,7 @@ class ShiftController extends Controller
         }
 
         // Total break time (in minutes)
-        $totalBreakTime = $shift->calculateTotalBreakTime() ?? 0;
+        $totalBreakTime = $shift->calculateTotalBreakTime() * 60 ?? 0;
 
         return response()->json([
             'shift_started' => $shiftStarted,

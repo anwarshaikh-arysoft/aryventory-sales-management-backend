@@ -202,6 +202,10 @@ export default function LeadPage({ leadId }: LeadPageProps) {
                       <div className="text-sm text-muted-foreground">Address</div>
                       <div className="flex items-center gap-2">{lead.address ? (<><MapPin className="h-4 w-4" />{lead.address}</>) : '-'}</div>
                     </div>
+                    <div className="sm:col-span-2">
+                      <div className="text-sm text-muted-foreground">GPS Location</div>
+                      <div className="flex items-center gap-2">{lead.gps_location ? (<><MapPin className="h-4 w-4" />{lead.gps_location}</>) : '-'}</div>
+                    </div>
                   </div>
 
                   <Separator className="my-4" />
