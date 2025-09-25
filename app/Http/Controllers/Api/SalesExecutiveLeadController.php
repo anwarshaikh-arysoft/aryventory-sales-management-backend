@@ -7,6 +7,8 @@ use App\Models\Lead;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Carbon\Carbon;
+use App\Models\LeadStatus;
 
 class SalesExecutiveLeadController extends Controller
 {
@@ -47,6 +49,7 @@ class SalesExecutiveLeadController extends Controller
     */
     public function leads(Request $request)
     {
+
         $query = Lead::query()
             ->where('assigned_to', Auth::id())
             ->with('leadStatusData');
@@ -64,11 +67,20 @@ class SalesExecutiveLeadController extends Controller
             });
         }
 
+        // Get No follow up statuses
+        $noFollowUpStatuses = LeadStatus::whereIn('name', ['Sold', 'Already Using CRM', 'Not Interested', 'Using Different App'])->pluck('id');
+
+        // if lead_status is today then return only today's where follow_up_date is todays date
+        if ($request->filled('lead_status') && $request->input('lead_status') == 'today') {
+            $query->whereDate('next_follow_up_date', Carbon::today())
+            ->whereNotIn('lead_status', $noFollowUpStatuses);
+        }        
+
         // Filter by lead_status (supports single value or array of values)
-        if ($request->filled('lead_status')) {
+        if ($request->filled('lead_status') && $request->input('lead_status') != 'today') {
             $statuses = $request->input('lead_status');
             $statuses = is_array($statuses) ? $statuses : [$statuses];
-            $query->whereIn('lead_status', $statuses);
+            $query->whereIn('lead_status',  $statuses);
         }
 
         // Filter by next_follow_up_date range (either start, end, or both)
@@ -115,6 +127,7 @@ class SalesExecutiveLeadController extends Controller
                 'mobile_number' => 'required|string|max:20',
                 'email' => 'nullable|email',
                 'address' => 'nullable|string',
+                'branches' => 'nullable|integer',
                 'area_locality' => 'nullable|string',
                 'pincode' => 'nullable|string',
                 'gps_location' => 'nullable|string',
@@ -125,6 +138,8 @@ class SalesExecutiveLeadController extends Controller
                 'next_follow_up_date' => 'nullable|date',
                 'meeting_notes' => 'nullable|string',
             ]);
+
+            Log::info($validated);
 
             $validated['created_by'] = Auth::id();
             $validated['assigned_to'] = Auth::id();
@@ -174,6 +189,7 @@ class SalesExecutiveLeadController extends Controller
             'address' => 'nullable|string',
             'area_locality' => 'nullable|string',
             'pincode' => 'nullable|string',
+            'branches' => 'nullable|integer',
             'gps_location' => 'nullable|string',
             'business_type' => 'nullable|integer',
             'current_system' => 'nullable|integer',
@@ -208,12 +224,22 @@ class SalesExecutiveLeadController extends Controller
     {
         $perPage = $request->get('per_page', 15); // Default 15 per page if not provided
 
+        $noFollowUpStatuses = LeadStatus::whereIn('name', ['Sold', 'Already Using CRM', 'Not Interested', 'Using Different App'])->pluck('id');
+
+        $totalLeads = Lead::where('assigned_to', Auth::id())
+            ->whereNotIn('lead_status', $noFollowUpStatuses)
+            ->count();
+
         $leads = Lead::where('assigned_to', Auth::id())
             ->with('leadStatusData')
+            ->whereNotIn('lead_status', $noFollowUpStatuses)
             ->orderBy('next_follow_up_date', 'asc')
             ->paginate($perPage);
 
-        return response()->json($leads);
+        return response()->json([
+            'leads' => $leads,
+            'total_leads' => $totalLeads
+        ]);
     }
 
     /**

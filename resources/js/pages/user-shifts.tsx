@@ -37,6 +37,52 @@ L.Icon.Default.mergeOptions({
     shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
 });
 
+interface Meeting {
+    id: number;
+    lead_id: number;
+    meeting_start_time: string;
+    meeting_end_time?: string;
+    meeting_start_latitude?: number;
+    meeting_start_longitude?: number;
+    meeting_end_latitude?: number;
+    meeting_end_longitude?: number;
+    meeting_end_notes?: string;
+    created_at: string;
+    updated_at: string;
+    lead_details?: {
+        id: number;
+        shop_name: string;
+        contact_person: string;
+        mobile_number: string;
+        address?: string;
+        area_locality?: string;
+        pincode?: string;
+        gps_location?: string;
+        business_type_data?: {
+            id: number;
+            name: string;
+        };
+        current_system_data?: {
+            id: number;
+            name: string;
+        };
+        lead_status_data?: {
+            id: number;
+            name: string;
+        };
+    };
+    time_from_previous_meeting?: {
+        hours: number;
+        minutes: number;
+        total_minutes: number;
+        formatted: string;
+    };
+    distance_from_previous_meeting?: {
+        kilometers: number;
+        meters: number;
+    };
+}
+
 interface UserShift {
     id: number;
     user_id: number;
@@ -52,6 +98,9 @@ interface UserShift {
     break_start: string | null;
     break_end: string | null;
     total_break_mins: number | null;
+    meetings?: Meeting[];
+    meetings_count?: number;
+    total_meeting_time_minutes?: number;
     user: {
         id: number;
         name: string;
@@ -69,17 +118,21 @@ interface PaginatedShifts {
 }
 
 interface UserShiftsPageProps {
-    userId: number;
-    userName: string;
-    userEmail: string;
-    userDesignation?: string;
+    user: {
+        id: number;
+        name: string;
+        email: string;
+        designation?: string;
+    };
+    shifts?: any;
+    filters?: any;
 }
 
-export default function UserShiftsPage({ userId, userName, userEmail, userDesignation }: UserShiftsPageProps) {
-    const [shifts, setShifts] = useState<PaginatedShifts | null>(null);
+export default function UserShiftsPage({ user, shifts: initialShifts, filters }: UserShiftsPageProps) {
+    const [shifts, setShifts] = useState<PaginatedShifts | null>(initialShifts || null);
     const [loading, setLoading] = useState(false);
-    const [startDate, setStartDate] = useState('');
-    const [endDate, setEndDate] = useState('');
+    const [startDate, setStartDate] = useState(filters?.start_date || '');
+    const [endDate, setEndDate] = useState(filters?.end_date || '');
     const [selectedShift, setSelectedShift] = useState<UserShift | null>(null);
     const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
@@ -87,14 +140,13 @@ export default function UserShiftsPage({ userId, userName, userEmail, userDesign
         setLoading(true);
         try {
             const params = new URLSearchParams({
-                user_id: userId.toString(),
                 per_page: '50'
             });
 
             if (startDate) params.append('start_date', startDate);
             if (endDate) params.append('end_date', endDate);
 
-            const response = await axios.get(`/api/shift/user-shifts?${params.toString()}`);
+            const response = await axios.get(`/api/users/${user.id}/shifts?${params.toString()}`);
             setShifts(response.data.shifts);
             
             // Auto-select the first shift if available
@@ -109,15 +161,24 @@ export default function UserShiftsPage({ userId, userName, userEmail, userDesign
 
     useEffect(() => {
         fetchShifts();
-    }, [userId, startDate, endDate]);
+    }, [user.id, startDate, endDate]);
 
-    // Set default date range to last 30 days
+    // Set default date range to last 30 days if no filters provided
     useEffect(() => {
-        const today = dayjs();
-        const thirtyDaysAgo = today.subtract(30, 'day');
-        setStartDate(thirtyDaysAgo.format('YYYY-MM-DD'));
-        setEndDate(today.format('YYYY-MM-DD'));
-    }, []);
+        if (!filters?.start_date && !filters?.end_date) {
+            const today = dayjs();
+            const thirtyDaysAgo = today.subtract(30, 'day');
+            setStartDate(thirtyDaysAgo.format('YYYY-MM-DD'));
+            setEndDate(today.format('YYYY-MM-DD'));
+        }
+    }, [filters]);
+
+    // Auto-select first shift if initial data is provided
+    useEffect(() => {
+        if (initialShifts?.data?.length > 0 && !selectedShift) {
+            setSelectedShift(initialShifts.data[0]);
+        }
+    }, [initialShifts, selectedShift]);
 
     const formatDateTime = (dateTime: string | null) => {
         if (!dateTime) return '-';
@@ -148,7 +209,21 @@ export default function UserShiftsPage({ userId, userName, userEmail, userDesign
         return num.toFixed(decimals);
     };
 
-    const getUserInitials = (name: string) => {
+    const formatMeetingCoordinate = (coordinate: number | string | null | undefined, decimals: number = 4): string => {
+        if (coordinate === null || coordinate === undefined || coordinate === '') {
+            return 'N/A';
+        }
+        const num = Number(coordinate);
+        if (isNaN(num)) {
+            return 'Invalid';
+        }
+        return num.toFixed(decimals);
+    };
+
+    const getUserInitials = (name: string | undefined | null) => {
+        if (!name || typeof name !== 'string') {
+            return 'U';
+        }
         return name
             .split(' ')
             .map(word => word.charAt(0))
@@ -264,7 +339,7 @@ export default function UserShiftsPage({ userId, userName, userEmail, userDesign
         <AppLayout
             breadcrumbs={[
                 { title: 'Users', href: '/users' },
-                { title: `${userName} - Shifts`, href: `/users/${userId}/shifts` }
+                { title: `${user.name} - Shifts`, href: `/users/${user.id}/shifts` }
             ]}
         >
             <div className="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
@@ -282,12 +357,12 @@ export default function UserShiftsPage({ userId, userName, userEmail, userDesign
                         </Button>
                         <div className="flex items-center gap-3">
                             <Avatar className="h-10 w-10">
-                                <AvatarFallback>{getUserInitials(userName)}</AvatarFallback>
+                                <AvatarFallback>{getUserInitials(user.name)}</AvatarFallback>
                             </Avatar>
                             <div>
-                                <Heading title={`${userName} - Shift Tracking`} />
+                                <Heading title={`${user.name} - Shift Tracking`} />
                                 <p className="text-sm text-muted-foreground">
-                                    {userDesignation && `${userDesignation} • `}{userEmail}
+                                    {user.designation && `${user.designation} • `}{user.email}
                                 </p>
                             </div>
                         </div>
@@ -383,6 +458,13 @@ export default function UserShiftsPage({ userId, userName, userEmail, userDesign
                                                 <div className="flex items-center gap-1">
                                                     <Coffee className="h-3 w-3" />
                                                     {Math.floor(shift.total_break_mins / 60)}h {shift.total_break_mins % 60}m break
+                                                </div>
+                                            )}
+                                            
+                                            {shift.meetings_count && shift.meetings_count > 0 && (
+                                                <div className="flex items-center gap-1">
+                                                    <User className="h-3 w-3" />
+                                                    {shift.meetings_count} meetings
                                                 </div>
                                             )}
                                         </div>
@@ -500,6 +582,105 @@ export default function UserShiftsPage({ userId, userName, userEmail, userDesign
                                         </div>
                                     </CardContent>
                                 </Card>
+
+                                {/* Meetings Section */}
+                                {selectedShift.meetings && selectedShift.meetings.length > 0 && (
+                                    <Card>
+                                        <CardHeader className="pb-3">
+                                            <CardTitle className="flex items-center gap-2">
+                                                <User className="h-4 w-4" />
+                                                Meetings - {selectedShift.meetings_count} meetings ({Math.floor((selectedShift.total_meeting_time_minutes || 0) / 60)}h {(selectedShift.total_meeting_time_minutes || 0) % 60}m total)
+                                            </CardTitle>
+                                            <CardDescription>
+                                                Meeting details with time between meetings and distances
+                                            </CardDescription>
+                                        </CardHeader>
+                                        <CardContent>
+                                            <div className="space-y-4">
+                                                {selectedShift.meetings.map((meeting, index) => (
+                                                    <div key={meeting.id} className="border rounded-lg p-4">
+                                                        <div className="flex items-center justify-between mb-3">
+                                                            <div className="flex items-center gap-2">
+                                                                <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-medium text-sm">
+                                                                    {index + 1}
+                                                                </div>
+                                                                <div>
+                                                                    <h4 className="font-medium">{meeting.lead_details?.shop_name || 'Unknown Shop'}</h4>
+                                                                    <p className="text-sm text-muted-foreground">
+                                                                        {meeting.lead_details?.contact_person || 'N/A'} • {meeting.lead_details?.mobile_number || 'N/A'}
+                                                                    </p>
+                                                                </div>
+                                                            </div>
+                                                            <div className="text-right">
+                                                                <div className="text-sm font-medium">
+                                                                    {dayjs(meeting.meeting_start_time).format('HH:mm')} - {meeting.meeting_end_time ? dayjs(meeting.meeting_end_time).format('HH:mm') : 'Ongoing'}
+                                                                </div>
+                                                                {meeting.meeting_end_time && (
+                                                                    <div className="text-xs text-muted-foreground">
+                                                                        {Math.floor(dayjs(meeting.meeting_end_time).diff(dayjs(meeting.meeting_start_time), 'minute') / 60)}h {dayjs(meeting.meeting_end_time).diff(dayjs(meeting.meeting_start_time), 'minute') % 60}m
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        </div>
+
+                                                        <div className="grid gap-3 md:grid-cols-2">
+                                                            {/* Lead Details */}
+                                                            <div className="space-y-2">
+                                                                <h5 className="font-medium text-sm">Lead Information</h5>
+                                                                <div className="text-sm space-y-1">
+                                                                    <div><strong>Address:</strong> {meeting.lead_details?.address || 'N/A'}</div>
+                                                                    <div><strong>Area:</strong> {meeting.lead_details?.area_locality || 'N/A'}</div>
+                                                                    <div><strong>Pincode:</strong> {meeting.lead_details?.pincode || 'N/A'}</div>
+                                                                    {meeting.lead_details?.business_type_data && (
+                                                                        <div><strong>Business Type:</strong> {meeting.lead_details.business_type_data.name}</div>
+                                                                    )}
+                                                                    {meeting.lead_details?.lead_status_data && (
+                                                                        <div><strong>Status:</strong> {meeting.lead_details.lead_status_data.name}</div>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+
+                                                            {/* Time & Distance Info */}
+                                                            <div className="space-y-2">
+                                                                <h5 className="font-medium text-sm">Travel Information</h5>
+                                                                <div className="text-sm space-y-1">
+                                                                    {meeting.time_from_previous_meeting ? (
+                                                                        <div>
+                                                                            <strong>Time from previous meeting:</strong> {meeting.time_from_previous_meeting.formatted}
+                                                                        </div>
+                                                                    ) : (
+                                                                        <div className="text-muted-foreground">First meeting of the day</div>
+                                                                    )}
+                                                                    
+                                                                    {meeting.distance_from_previous_meeting ? (
+                                                                        <div>
+                                                                            <strong>Distance from previous meeting:</strong> {meeting.distance_from_previous_meeting.kilometers} km ({meeting.distance_from_previous_meeting.meters} m)
+                                                                        </div>
+                                                                    ) : (
+                                                                        <div className="text-muted-foreground">No distance data available</div>
+                                                                    )}
+
+                                                                    {meeting.meeting_start_latitude && meeting.meeting_start_longitude && (
+                                                                        <div>
+                                                                            <strong>Meeting Location:</strong> {formatMeetingCoordinate(meeting.meeting_start_latitude)}, {formatMeetingCoordinate(meeting.meeting_start_longitude)}
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                        {meeting.meeting_end_notes && (
+                                                            <div className="mt-3 pt-3 border-t">
+                                                                <h5 className="font-medium text-sm mb-1">Meeting Notes</h5>
+                                                                <p className="text-sm text-muted-foreground">{meeting.meeting_end_notes}</p>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+                                )}
 
                                 {/* Map */}
                                 <Card>

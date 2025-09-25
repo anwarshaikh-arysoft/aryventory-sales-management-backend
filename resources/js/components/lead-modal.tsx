@@ -30,6 +30,7 @@ interface FormData {
     alternate_number: string;
     email: string;
     address: string;
+    branches: number;
     area_locality: string;
     pincode: string;
     gps_location: string;
@@ -55,6 +56,7 @@ export default function LeadModal({ isOpen, onClose, onSave, lead, formOptions }
         alternate_number: '',
         email: '',
         address: '',
+        branches: 1,
         area_locality: '',
         pincode: '',
         gps_location: '',
@@ -85,6 +87,7 @@ export default function LeadModal({ isOpen, onClose, onSave, lead, formOptions }
                     alternate_number: lead.alternate_number || '',
                     email: lead.email || '',
                     address: lead.address || '',
+                    branches: lead.branches || 1,
                     area_locality: lead.area_locality || '',
                     pincode: lead.pincode || '',
                     gps_location: lead.gps_location || '',
@@ -106,6 +109,7 @@ export default function LeadModal({ isOpen, onClose, onSave, lead, formOptions }
                     alternate_number: '',
                     email: '',
                     address: '',
+                    branches: 1,
                     area_locality: '',
                     pincode: '',
                     gps_location: '',
@@ -154,9 +158,29 @@ export default function LeadModal({ isOpen, onClose, onSave, lead, formOptions }
             newErrors.mobile_number = ['Mobile number is required'];
         }
 
-        if (!formData.business_type.trim() || formData.business_type === 'none') {
-            newErrors.business_type = ['Business type is required'];
-        }        
+        if (!formData.address.trim()) {
+            newErrors.address = ['Address is required'];
+        }
+
+        if (!formData.area_locality.trim()) {
+            newErrors.area_locality = ['Area/locality is required'];
+        }
+
+        if (!formData.pincode.trim()) {
+            newErrors.pincode = ['Pincode is required'];
+        }
+
+        if (!formData.gps_location.trim()) {
+            newErrors.gps_location = ['GPS location is required'];
+        }
+
+        if (!formData.assigned_to.trim()) {
+            newErrors.assigned_to = ['Assigned to is required'];
+        }
+
+        // if (!formData.business_type.trim() || formData.business_type === 'none') {
+        //     newErrors.business_type = ['Business type is required'];
+        // }        
 
         // Email validation (optional but if provided should be valid)
         if (formData.email && formData.email.trim()) {
@@ -188,6 +212,7 @@ export default function LeadModal({ isOpen, onClose, onSave, lead, formOptions }
                 alternate_number: formData.alternate_number || null,
                 email: formData.email || null,
                 address: formData.address || null,
+                branches: formData.branches || null,
                 area_locality: formData.area_locality || null,
                 pincode: formData.pincode || null,
                 gps_location: formData.gps_location || null,
@@ -223,7 +248,7 @@ export default function LeadModal({ isOpen, onClose, onSave, lead, formOptions }
             } else {
                 // Generic error handling
                 setErrors({
-                    general: ['An error occurred while saving the lead. Please try again.']                    
+                    general: ['An error occurred while saving the lead. Please try again. ' + error]                    
                 });
             }
         }
@@ -332,6 +357,22 @@ export default function LeadModal({ isOpen, onClose, onSave, lead, formOptions }
                             />
                             {getErrorMessage('email') && (
                                 <p className="text-sm text-red-600">{getErrorMessage('email')}</p>
+                            )}
+                        </div>
+
+                        {/* Branches */}
+
+                        <div className="space-y-2">
+                            <Label htmlFor="branches">Branches</Label>
+                            <Input
+                                id="branches"
+                                value={formData.branches}
+                                onChange={(e) => handleInputChange('branches', e.target.value)}
+                                placeholder="Enter branches"
+                                className={getErrorMessage('branches') ? 'border-red-500' : ''}
+                            />
+                            {getErrorMessage('branches') && (
+                                <p className="text-sm text-red-600">{getErrorMessage('branches')}</p>
                             )}
                         </div>
 
@@ -452,7 +493,6 @@ export default function LeadModal({ isOpen, onClose, onSave, lead, formOptions }
                                     <SelectValue placeholder="Select user" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="none">Unassigned</SelectItem>
                                     {formOptions.users.map((user) => (
                                         <SelectItem key={user.id} value={user.id.toString()}>
                                             {user.name}

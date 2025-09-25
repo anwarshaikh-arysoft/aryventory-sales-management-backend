@@ -80,6 +80,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/shift/user-shifts', [ShiftController::class, 'getUserShifts']); // For managers/admins
     Route::get('/shift/all-users-shifts', [ShiftController::class, 'getAllUsersShifts']); // For admin overview
     Route::get('/shift/current-status', [ShiftController::class, 'getAllUsersCurrentStatus']); // Current status of all users
+    Route::get('/users/{user}/shifts', [ShiftController::class, 'getUserDetailedShifts']); // Detailed shift information with meetings
 });
 
 
@@ -121,6 +122,7 @@ Route::put('users/{user}/password', [App\Http\Controllers\Api\UserController::cl
 // Leads crud
 Route::apiResource('leads', App\Http\Controllers\Api\LeadController::class);
 Route::delete('leads-bulk', [App\Http\Controllers\Api\LeadController::class, 'bulkDestroy']);
+Route::get('leads-export', [App\Http\Controllers\Api\LeadController::class, 'export']);
 
 // Meetings crud
 Route::middleware('auth:sanctum')->group(function(){

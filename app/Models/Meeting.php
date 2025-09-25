@@ -11,6 +11,7 @@ class Meeting extends Model
 
     protected $fillable = [
         'lead_id',
+        'user_id',
         'meeting_start_time',
         'meeting_end_time',
         'meeting_start_latitude',
@@ -23,6 +24,11 @@ class Meeting extends Model
     public function lead()
     {
         return $this->belongsTo(Lead::class);
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
     }
 
     public function recordedAudios()

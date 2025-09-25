@@ -27,14 +27,7 @@ Route::middleware(['role:Admin,Manager','auth', 'verified'])->group(function () 
         ]);
     })->name('lead.show');
     
-    Route::get('users/{user}/shifts', function (\App\Models\User $user) {
-        return Inertia::render('user-shifts', [
-            'userId' => $user->id,
-            'userName' => $user->name,
-            'userEmail' => $user->email,
-            'userDesignation' => $user->designation,
-        ]);
-    })->name('user.shifts');
+    Route::get('users/{user}/shifts', [App\Http\Controllers\UserShiftController::class, 'show'])->name('user.shifts');
 });
 
 Route::middleware(['auth', 'role:Admin'])->group(function () {

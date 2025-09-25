@@ -247,8 +247,10 @@ class LeadController extends Controller
             'alternate_number' => 'nullable|string|max:20',
             'email' => 'nullable|email|max:255',
             'address' => 'nullable|string|max:500',
+            'branches' => 'nullable|integer',
             'area_locality' => 'nullable|string|max:255',
             'pincode' => 'nullable|string|max:10',
+            'branches' => 'nullable|integer',
             'gps_location' => 'nullable|string|max:255',
             'business_type' => 'nullable|exists:business_types,id',
             'current_system' => 'nullable|exists:current_systems,id',
@@ -343,6 +345,165 @@ class LeadController extends Controller
             'lead_statuses' => LeadStatus::all(),
             'users' => User::select('id', 'name', 'email')->get(),
         ]);
+    }
+
+    /**
+     * Export leads to CSV with all applied filters
+     */
+    public function export(Request $request)
+    {
+        $query = Lead::with([
+            'createdByUser',
+            'assignedToUser',
+            'lastUpdatedByUser',
+            'businessTypeData',
+            'currentSystemData',
+            'leadStatusData'
+        ]);
+
+        // Apply the same filters as the index method
+        if ($request->filled('shop_name')) {
+            $query->where(function ($q) use ($request) {
+                $q->where('shop_name', 'like', '%' . $request->shop_name . '%')
+                    ->orWhere('contact_person', 'like', '%' . $request->shop_name . '%')
+                    ->orWhere('email', 'like', '%' . $request->shop_name . '%')
+                    ->orWhere('mobile_number', 'like', '%' . $request->shop_name . '%');
+            });
+        }
+
+        if ($request->filled('contact_person')) {
+            $query->where('contact_person', 'like', '%' . $request->contact_person . '%');
+        }
+
+        if ($request->filled('mobile_number')) {
+            $query->where('mobile_number', 'like', '%' . $request->mobile_number . '%');
+        }
+
+        if ($request->filled('email')) {
+            $query->where('email', 'like', '%' . $request->email . '%');
+        }
+
+        if ($request->filled('area_locality')) {
+            $query->where('area_locality', 'like', '%' . $request->area_locality . '%');
+        }
+
+        if ($request->filled('business_type')) {
+            $query->where('business_type', $request->business_type);
+        }
+
+        if ($request->filled('current_system')) {
+            $query->where('current_system', $request->current_system);
+        }
+
+        if ($request->filled('lead_status')) {
+            $query->where('lead_status', $request->lead_status);
+        }
+
+        if ($request->filled('assigned_to')) {
+            $query->where('assigned_to', $request->assigned_to);
+        }
+
+        if ($request->filled('created_by')) {
+            $query->where('created_by', $request->created_by);
+        }
+
+        if ($request->filled('next_follow_up_date')) {
+            $query->whereDate('next_follow_up_date', $request->next_follow_up_date);
+        }
+
+        if ($request->filled('start_date') && $request->filled('end_date')) {
+            $query->whereBetween('created_at', [
+                $request->start_date . ' 00:00:00',
+                $request->end_date . ' 23:59:59',
+            ]);
+        }
+
+        // Get all leads without pagination
+        $leads = $query->orderBy('created_at', 'desc')->get();
+
+        // Generate CSV content
+        $csvData = [];
+        
+        // CSV Headers
+        $csvData[] = [
+            'ID',
+            'Created Date',
+            'Shop Name',
+            'Contact Person',
+            'Mobile Number',
+            'Alternate Number',
+            'Email',
+            'Address',
+            'Area/Locality',
+            'Pincode',
+            'Branches',
+            'GPS Location',
+            'Business Type',
+            'Current System',
+            'Lead Status',
+            'Plan Interest',
+            'Next Follow-up Date',
+            'Meeting Notes',
+            'Assigned To',
+            'Created By',
+            'Last Updated By',
+            'Completed At',
+            'Created At',
+            'Updated At'
+        ];
+
+        // CSV Data rows
+        foreach ($leads as $lead) {
+            $csvData[] = [
+                $lead->id,
+                $lead->created_at ? (is_string($lead->created_at) ? $lead->created_at : $lead->created_at->format('Y-m-d H:i:s')) : '',
+                $lead->shop_name,
+                $lead->contact_person,
+                $lead->mobile_number,
+                $lead->alternate_number,
+                $lead->email,
+                $lead->address,
+                $lead->area_locality,
+                $lead->pincode,
+                $lead->branches,
+                $lead->gps_location,
+                $lead->businessTypeData ? $lead->businessTypeData->name : '',
+                $lead->currentSystemData ? $lead->currentSystemData->name : '',
+                $lead->leadStatusData ? $lead->leadStatusData->name : '',
+                $lead->plan_interest,
+                $lead->next_follow_up_date ? (is_string($lead->next_follow_up_date) ? $lead->next_follow_up_date : $lead->next_follow_up_date->format('Y-m-d')) : '',
+                $lead->meeting_notes,
+                $lead->assignedToUser ? $lead->assignedToUser->name : '',
+                $lead->createdByUser ? $lead->createdByUser->name : '',
+                $lead->lastUpdatedByUser ? $lead->lastUpdatedByUser->name : '',
+                $lead->completed_at ? (is_string($lead->completed_at) ? $lead->completed_at : $lead->completed_at->format('Y-m-d H:i:s')) : '',
+                $lead->created_at ? (is_string($lead->created_at) ? $lead->created_at : $lead->created_at->format('Y-m-d H:i:s')) : '',
+                $lead->updated_at ? (is_string($lead->updated_at) ? $lead->updated_at : $lead->updated_at->format('Y-m-d H:i:s')) : ''
+            ];
+        }
+
+        // Convert to CSV string
+        $csvContent = '';
+        foreach ($csvData as $row) {
+            $csvContent .= implode(',', array_map(function($field) {
+                // Escape fields that contain commas, quotes, or newlines
+                if (strpos($field, ',') !== false || strpos($field, '"') !== false || strpos($field, "\n") !== false) {
+                    return '"' . str_replace('"', '""', $field) . '"';
+                }
+                return $field;
+            }, $row)) . "\n";
+        }
+
+        // Generate filename with timestamp
+        $filename = 'leads_export_' . now()->format('Y-m-d_H-i-s') . '.csv';
+
+        // Return CSV file download
+        return response($csvContent)
+            ->header('Content-Type', 'text/csv')
+            ->header('Content-Disposition', 'attachment; filename="' . $filename . '"')
+            ->header('Cache-Control', 'no-cache, no-store, must-revalidate')
+            ->header('Pragma', 'no-cache')
+            ->header('Expires', '0');
     }
 
 

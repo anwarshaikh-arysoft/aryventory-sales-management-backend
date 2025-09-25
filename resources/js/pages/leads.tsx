@@ -8,7 +8,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import Heading from '@/components/heading';
 import AppLayout from '@/layouts/app-layout';
 import { type PaginatedResponse, type Lead, type LeadFormOptions } from '@/types';
-import { Edit2, Plus, Search, Trash2, Star, Phone, Mail, MapPin } from 'lucide-react';
+import { Edit2, Plus, Search, Trash2, Star, Phone, Mail, MapPin, Download } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import dayjs from "dayjs";
@@ -261,6 +261,59 @@ export default function Leads(props: LeadsPageProps) {
         handleModalClose();
     };
 
+    const handleDownloadLeads = async () => {
+        try {
+            const params = new URLSearchParams();
+
+            if (searchTerm) {
+                params.append("shop_name", searchTerm);
+            }
+            if (selectedStatus) {
+                params.append("lead_status", selectedStatus);
+            }
+            if (selectedBusinessType) {
+                params.append("business_type", selectedBusinessType);
+            }
+            if (selectedAssignedTo) {
+                params.append("assigned_to", selectedAssignedTo);
+            }
+            if (startDate) {
+                params.append("start_date", startDate);
+            }
+            if (endDate) {
+                params.append("end_date", endDate);
+            }
+
+            const response = await axios.get(`/api/leads-export?${params.toString()}`, {
+                responseType: 'blob',
+            });
+
+            // Create blob link to download
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            
+            // Get filename from response headers or use default
+            const contentDisposition = response.headers['content-disposition'];
+            let filename = 'leads_export.csv';
+            if (contentDisposition) {
+                const filenameMatch = contentDisposition.match(/filename="(.+)"/);
+                if (filenameMatch) {
+                    filename = filenameMatch[1];
+                }
+            }
+            
+            link.setAttribute('download', filename);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.URL.revokeObjectURL(url);
+        } catch (error) {
+            console.error('Error downloading leads:', error);
+            alert('Error downloading leads. Please try again.');
+        }
+    };
+
     const generatePaginationItems = () => {
         if (!leads) return [];
 
@@ -354,6 +407,14 @@ export default function Leads(props: LeadsPageProps) {
                                 Delete Selected ({selectedLeads.length})
                             </Button>
                         )}
+                        <Button 
+                            onClick={handleDownloadLeads} 
+                            variant="outline" 
+                            className="flex items-center gap-2"
+                        >
+                            <Download className="h-4 w-4" />
+                            Download CSV
+                        </Button>
                         <Button onClick={handleAddLead} className="flex items-center gap-2">
                             <Plus className="h-4 w-4" />
                             Add Lead

@@ -21,6 +21,7 @@ class Lead extends Model
         'address',
         'area_locality',
         'pincode',
+        'branches',
         'gps_location',
         'business_type',
         'current_system',

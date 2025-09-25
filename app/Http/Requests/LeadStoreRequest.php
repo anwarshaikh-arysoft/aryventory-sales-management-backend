@@ -11,7 +11,7 @@ class LeadStoreRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        return true;
     }
 
     /**
@@ -30,14 +30,16 @@ class LeadStoreRequest extends FormRequest
             'address' => 'required|string|max:500',
             'area_locality' => 'required|string|max:255',
             'pincode' => 'required|string|max:10',
+            'branches' => 'nullable|integer',
             'gps_location' => 'required|string|max:255',
-            'business_type' => 'required|exists:business_types,id',
-            'current_system' => 'required|exists:current_systems,id',
-            'lead_status' => 'required|exists:lead_statuses,id',
-            'plan_interest' => 'required|string|max:255',
-            'next_follow_up_date' => 'required|date',
+            'business_type' => 'nullable|exists:business_types,id',
+            'current_system' => 'nullable|exists:current_systems,id',
+            'lead_status' => 'nullable|exists:lead_statuses,id',
+            'plan_interest' => 'nullable|string|max:255',
+            'next_follow_up_date' => 'nullable|date',
             'meeting_notes' => 'nullable|string',
             'assigned_to' => 'required|exists:users,id',
+            'action' => 'nullable|string|max:255',
         ];
     }
 
@@ -46,21 +48,23 @@ class LeadStoreRequest extends FormRequest
     {
         return [
             'shop_name' => 'shop name',
-            'contact_person' => 'contact_person',
-            'mobile_number' => 'mobile_number',
-            'alternate_number' => 'alternate_number',
+            'contact_person' => 'contact person',
+            'mobile_number' => 'mobile number',
+            'alternate_number' => 'alternate number',
             'email' => 'email',
             'address' => 'address',
-            'area_locality' => 'area_locality',
+            'area_locality' => 'area/locality',
             'pincode' => 'pincode',
-            'gps_location' => 'gps_location',
-            'business_type' => 'business_type',
-            'current_system' => 'current_system',
-            'lead_status' => 'lead_status',
-            'plan_interest' => 'plan_interest',
-            'next_follow_up_date' => 'next_follow_up_date',
-            'meeting_notes' => 'nullable|string',
-            'assigned_to' => 'assigned_to',
+            'gps_location' => 'GPS location',
+            'business_type' => 'business type',
+            'current_system' => 'current system',
+            'lead_status' => 'lead status',
+            'plan_interest' => 'plan interest',
+            'next_follow_up_date' => 'next follow-up date',
+            'meeting_notes' => 'meeting notes',
+            'assigned_to' => 'assigned to',
+            'branches' => 'branches',
+            'action' => 'action',
         ];
     }
 }

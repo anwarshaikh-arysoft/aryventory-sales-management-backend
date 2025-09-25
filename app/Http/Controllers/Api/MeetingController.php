@@ -27,10 +27,14 @@ class MeetingController extends Controller
 
     public function store(Request $request)
     {
+
+        $user = $request->user();
+
         $validator = Validator::make($request->all(), [
             'lead_id'            => 'required|exists:leads,id',
             'meeting_start_time' => 'required|date',
             'meeting_end_time'   => 'nullable|date|after_or_equal:meeting_start_time',
+            'user_id'            => $user->id,
         ]);
 
         if ($validator->fails()) {
@@ -158,6 +162,7 @@ class MeetingController extends Controller
         // Create new meeting
         $meeting = new Meeting();
         $meeting->lead_id = $request->lead_id;
+        $meeting->user_id = $user->id;
         $meeting->meeting_start_time = now();
         $meeting->meeting_start_latitude = $data['latitude'];
         $meeting->meeting_start_longitude = $data['longitude'];

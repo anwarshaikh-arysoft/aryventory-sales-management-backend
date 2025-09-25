@@ -87,6 +87,7 @@ export interface Lead {
     alternate_number?: string;
     email?: string;
     address?: string;
+    branches?: number;
     area_locality?: string;
     pincode?: string;
     gps_location?: string;
@@ -96,6 +97,7 @@ export interface Lead {
     plan_interest?: string;
     next_follow_up_date?: string;
     meeting_notes?: string;
+    completed_at?: string;
     created_at: string;
     updated_at: string;
     created_by_user?: User;
@@ -182,4 +184,68 @@ export interface LeadFormOptions {
     current_systems: CurrentSystem[];
     lead_statuses: LeadStatus[];
     users: User[];
+}
+
+export interface Meeting {
+    id: number;
+    lead_id: number;
+    meeting_start_time: string;
+    meeting_end_time?: string;
+    meeting_start_latitude?: number;
+    meeting_start_longitude?: number;
+    meeting_end_latitude?: number;
+    meeting_end_longitude?: number;
+    meeting_end_notes?: string;
+    created_at: string;
+    updated_at: string;
+    lead?: Lead;
+    lead_details?: Lead;
+    time_from_previous_meeting?: TimeDifference;
+    distance_from_previous_meeting?: DistanceInfo;
+}
+
+export interface TimeDifference {
+    hours: number;
+    minutes: number;
+    total_minutes: number;
+    formatted: string;
+}
+
+export interface DistanceInfo {
+    kilometers: number;
+    meters: number;
+}
+
+export interface UserDailyShift {
+    id: number;
+    user_id: number;
+    shift_date: string;
+    shift_start?: string;
+    shift_end?: string;
+    break_start?: string;
+    break_end?: string;
+    total_break_mins?: number;
+    notes?: string;
+    shift_start_selfie_image?: string;
+    shift_end_selfie_image?: string;
+    shift_start_latitude?: number;
+    shift_start_longitude?: number;
+    shift_end_latitude?: number;
+    shift_end_longitude?: number;
+    created_at: string;
+    updated_at: string;
+    meetings?: Meeting[];
+    meetings_count?: number;
+    total_meeting_time_minutes?: number;
+}
+
+export interface DetailedShiftResponse {
+    message: string;
+    user: {
+        id: number;
+        name: string;
+        email: string;
+        designation?: string;
+    };
+    shifts: PaginatedResponse<UserDailyShift>;
 }
