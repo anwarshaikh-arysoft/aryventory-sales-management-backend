@@ -225,6 +225,47 @@ class ShiftController extends Controller
         ]);
     }    
 
+    /**
+     * @OA\Post(
+     *     path="/api/shift/end",
+     *     summary="End a shift",
+     *     description="End the current shift for the authenticated user",
+     *     operationId="endShift",
+     *     tags={"Shifts"},
+     *     security={{"sanctum": {}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\MediaType(
+     *             mediaType="multipart/form-data",
+     *             @OA\Schema(
+     *                 @OA\Property(property="selfie", type="string", format="binary", description="End shift selfie image", nullable=true),
+     *                 @OA\Property(property="latitude", type="number", format="float", description="End location latitude", nullable=true),
+     *                 @OA\Property(property="longitude", type="number", format="float", description="End location longitude", nullable=true)
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Shift ended successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Shift ended"),
+     *             @OA\Property(property="shift", ref="#/components/schemas/UserDailyShift"),
+     *             @OA\Property(property="selfie_url", type="string", example="https://s3.amazonaws.com/bucket/end_selfie.jpg", description="End selfie image URL", nullable=true)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=400,
+     *         description="Bad Request - No shift started",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="No shift started")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthenticated"
+     *     )
+     * )
+     */
     public function endShift(Request $request)
     {
         // Track time to process the request
@@ -312,6 +353,43 @@ class ShiftController extends Controller
         ]);
     }
 
+    /**
+     * @OA\Post(
+     *     path="/api/shift/start-break",
+     *     summary="Start a break",
+     *     description="Start a break for the current shift",
+     *     operationId="startBreak",
+     *     tags={"Shifts"},
+     *     security={{"sanctum": {}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="break_type", type="string", example="lunch", description="Type of break", enum={"lunch", "coffee", "personal", "other"}, nullable=true),
+     *             @OA\Property(property="notes", type="string", example="Lunch break", description="Break notes", nullable=true)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Break started successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Break started"),
+     *             @OA\Property(property="break", type="object", description="Break details"),
+     *             @OA\Property(property="shift", type="object", description="Updated shift details")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=400,
+     *         description="Bad Request - No shift started or break already in progress",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="No shift started")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthenticated"
+     *     )
+     * )
+     */
     public function startBreak(Request $request)
     {
         $startTime = Carbon::now();
@@ -356,6 +434,36 @@ class ShiftController extends Controller
         ]);
     }
 
+    /**
+     * @OA\Post(
+     *     path="/api/shift/end-break",
+     *     summary="End a break",
+     *     description="End the current active break",
+     *     operationId="endBreak",
+     *     tags={"Shifts"},
+     *     security={{"sanctum": {}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Break ended successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Break ended"),
+     *             @OA\Property(property="break", type="object", description="Updated break details"),
+     *             @OA\Property(property="shift", type="object", description="Updated shift details")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=400,
+     *         description="Bad Request - No active break to end",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="No active break to end")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthenticated"
+     *     )
+     * )
+     */
     public function endBreak(Request $request)
     {
         $startTime = Carbon::now();
@@ -402,6 +510,33 @@ class ShiftController extends Controller
     }
 
 
+    /**
+     * @OA\Get(
+     *     path="/api/shift/status",
+     *     summary="Get shift status",
+     *     description="Get current shift status and timers for the authenticated user",
+     *     operationId="getShiftStatus",
+     *     tags={"Shifts"},
+     *     security={{"sanctum": {}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Shift status retrieved successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="shift_started", type="boolean", example=true),
+     *             @OA\Property(property="shift_ended", type="boolean", example=false),
+     *             @OA\Property(property="break_started", type="boolean", example=false),
+     *             @OA\Property(property="break_ended", type="boolean", example=true),
+     *             @OA\Property(property="shift_timer", type="integer", example=3600, description="Shift duration in seconds"),
+     *             @OA\Property(property="break_timer", type="integer", example=0, description="Current break duration in seconds"),
+     *             @OA\Property(property="total_break_time", type="integer", example=1800, description="Total break time in seconds")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthenticated"
+     *     )
+     * )
+     */
     public function getShiftStatus(Request $request)
     {
         $user = $request->user();

@@ -22,6 +22,54 @@ use PHPOpenSourceSaver\JWTAuth\Facades\JWTAuth;
 // PUT|PATCH       api/roles/{role} .......................................... roles.update › Api\RoleController@update
 // DELETE          api/roles/{role} ........................................ roles.destroy › Api\RoleController@destroy
 
+/**
+ * @OA\Post(
+ *     path="/api/login",
+ *     summary="User login",
+ *     description="Authenticate user and return access token",
+ *     operationId="login",
+ *     tags={"Authentication"},
+ *     @OA\RequestBody(
+ *         required=true,
+ *         @OA\JsonContent(
+ *             required={"email", "password"},
+ *             @OA\Property(property="email", type="string", format="email", example="user@example.com", description="User email address"),
+ *             @OA\Property(property="password", type="string", example="password123", description="User password")
+ *         )
+ *     ),
+ *     @OA\Response(
+ *         response=200,
+ *         description="Login successful",
+ *         @OA\JsonContent(
+ *             @OA\Property(property="token", type="string", example="1|abcdef123456789", description="Access token"),
+ *             @OA\Property(property="user", type="object", ref="#/components/schemas/User", description="User information")
+ *         )
+ *     ),
+ *     @OA\Response(
+ *         response=401,
+ *         description="Invalid credentials",
+ *         @OA\JsonContent(
+ *             @OA\Property(property="message", type="string", example="Invalid credentials")
+ *         )
+ *     ),
+ *     @OA\Response(
+ *         response=422,
+ *         description="Validation failed",
+ *         @OA\JsonContent(
+ *             @OA\Property(property="message", type="string", example="Validation failed"),
+ *             @OA\Property(property="errors", type="object", example={"email": {"The email field is required."}})
+ *         )
+ *     ),
+ *     @OA\Response(
+ *         response=500,
+ *         description="Server error",
+ *         @OA\JsonContent(
+ *             @OA\Property(property="message", type="string", example="Unable to login"),
+ *             @OA\Property(property="error", type="string", example="Internal server error")
+ *         )
+ *     )
+ * )
+ */
 // Login with sanctum Token
 Route::post('/login', function (Request $request) {
     try {
@@ -56,6 +104,37 @@ Route::post('/login', function (Request $request) {
     }
 });
 
+/**
+ * @OA\Get(
+ *     path="/api/user",
+ *     summary="Get current user",
+ *     description="Get information about the currently authenticated user",
+ *     operationId="getCurrentUser",
+ *     tags={"Authentication"},
+ *     security={{"sanctum": {}}},
+ *     @OA\Response(
+ *         response=200,
+ *         description="User information retrieved successfully",
+ *         @OA\JsonContent(
+ *             @OA\Property(property="id", type="integer", example=1),
+ *             @OA\Property(property="name", type="string", example="John Doe"),
+ *             @OA\Property(property="email", type="string", example="john@example.com"),
+ *             @OA\Property(property="phone", type="string", example="9876543210"),
+ *             @OA\Property(property="designation", type="string", example="Sales Executive"),
+ *             @OA\Property(property="role_id", type="integer", example=2),
+ *             @OA\Property(property="group_id", type="integer", example=1),
+ *             @OA\Property(property="manager_id", type="integer", example=3, nullable=true),
+ *             @OA\Property(property="email_verified_at", type="string", format="date-time", example="2024-01-01T10:00:00Z", nullable=true),
+ *             @OA\Property(property="created_at", type="string", format="date-time", example="2024-01-01T10:00:00Z"),
+ *             @OA\Property(property="updated_at", type="string", format="date-time", example="2024-01-01T10:00:00Z")
+ *         )
+ *     ),
+ *     @OA\Response(
+ *         response=401,
+ *         description="Unauthenticated"
+ *     )
+ * )
+ */
 // Get current logged in user
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();

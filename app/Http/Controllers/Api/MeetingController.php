@@ -20,11 +20,99 @@ use App\Services\ObjectUploadService;
 
 class MeetingController extends Controller
 {
+    /**
+     * @OA\Get(
+     *     path="/api/meetings",
+     *     summary="Get meetings list",
+     *     description="Retrieve all meetings with related data",
+     *     operationId="getMeetingsList",
+     *     tags={"Meetings"},
+     *     security={{"sanctum": {}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Meetings retrieved successfully",
+     *         @OA\JsonContent(
+     *             type="array",
+     *             @OA\Items(
+     *                 @OA\Property(property="id", type="integer", example=1),
+     *                 @OA\Property(property="lead_id", type="integer", example=1),
+     *                 @OA\Property(property="user_id", type="integer", example=1),
+     *                 @OA\Property(property="meeting_start_time", type="string", format="date-time", example="2024-01-15T10:00:00Z"),
+     *                 @OA\Property(property="meeting_end_time", type="string", format="date-time", example="2024-01-15T11:00:00Z", nullable=true),
+     *                 @OA\Property(property="meeting_start_latitude", type="number", format="float", example=28.6139, nullable=true),
+     *                 @OA\Property(property="meeting_start_longitude", type="number", format="float", example=77.2090, nullable=true),
+     *                 @OA\Property(property="meeting_end_latitude", type="number", format="float", example=28.6140, nullable=true),
+     *                 @OA\Property(property="meeting_end_longitude", type="number", format="float", example=77.2091, nullable=true),
+     *                 @OA\Property(property="meeting_end_notes", type="string", example="Meeting completed successfully", nullable=true),
+     *                 @OA\Property(property="created_at", type="string", format="date-time", example="2024-01-15T10:00:00Z"),
+     *                 @OA\Property(property="updated_at", type="string", format="date-time", example="2024-01-15T11:00:00Z"),
+     *                 @OA\Property(property="lead", type="object", description="Lead information"),
+     *                 @OA\Property(property="recorded_audios", type="array", @OA\Items(type="object")),
+     *                 @OA\Property(property="selfies", type="array", @OA\Items(type="object")),
+     *                 @OA\Property(property="shop_photos", type="array", @OA\Items(type="object"))
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthenticated"
+     *     )
+     * )
+     */
     public function index()
     {
         return Meeting::with(['lead', 'recordedAudios', 'selfies', 'shopPhotos'])->get();
     }
 
+    /**
+     * @OA\Post(
+     *     path="/api/meetings",
+     *     summary="Create a new meeting",
+     *     description="Create a new meeting for a lead",
+     *     operationId="createMeeting",
+     *     tags={"Meetings"},
+     *     security={{"sanctum": {}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"lead_id", "meeting_start_time"},
+     *             @OA\Property(property="lead_id", type="integer", example=1, description="Lead ID"),
+     *             @OA\Property(property="meeting_start_time", type="string", format="date-time", example="2024-01-15T10:00:00Z", description="Meeting start time"),
+     *             @OA\Property(property="meeting_end_time", type="string", format="date-time", example="2024-01-15T11:00:00Z", description="Meeting end time", nullable=true),
+     *             @OA\Property(property="meeting_start_latitude", type="number", format="float", example=28.6139, description="Start location latitude", nullable=true),
+     *             @OA\Property(property="meeting_start_longitude", type="number", format="float", example=77.2090, description="Start location longitude", nullable=true),
+     *             @OA\Property(property="meeting_end_latitude", type="number", format="float", example=28.6140, description="End location latitude", nullable=true),
+     *             @OA\Property(property="meeting_end_longitude", type="number", format="float", example=77.2091, description="End location longitude", nullable=true),
+     *             @OA\Property(property="meeting_end_notes", type="string", example="Meeting completed successfully", description="Meeting notes", nullable=true)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=201,
+     *         description="Meeting created successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="id", type="integer", example=1),
+     *             @OA\Property(property="lead_id", type="integer", example=1),
+     *             @OA\Property(property="user_id", type="integer", example=1),
+     *             @OA\Property(property="meeting_start_time", type="string", format="date-time", example="2024-01-15T10:00:00Z"),
+     *             @OA\Property(property="meeting_end_time", type="string", format="date-time", example="2024-01-15T11:00:00Z", nullable=true),
+     *             @OA\Property(property="created_at", type="string", format="date-time", example="2024-01-15T10:00:00Z"),
+     *             @OA\Property(property="updated_at", type="string", format="date-time", example="2024-01-15T10:00:00Z")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation failed",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Validation failed"),
+     *             @OA\Property(property="errors", type="object", example={"lead_id": {"The lead id field is required."}})
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthenticated"
+     *     )
+     * )
+     */
     public function store(Request $request)
     {
 
@@ -117,6 +205,51 @@ class MeetingController extends Controller
     /**
      * POST /meetings/start
      */
+    /**
+     * @OA\Post(
+     *     path="/api/meetings/start",
+     *     summary="Start a meeting",
+     *     description="Start a meeting with selfie and location tracking",
+     *     operationId="startMeeting",
+     *     tags={"Meetings"},
+     *     security={{"sanctum": {}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\MediaType(
+     *             mediaType="multipart/form-data",
+     *             @OA\Schema(
+     *                 required={"lead_id"},
+     *                 @OA\Property(property="lead_id", type="integer", example=1, description="Lead ID"),
+     *                 @OA\Property(property="selfie", type="string", format="binary", description="Selfie image", nullable=true),
+     *                 @OA\Property(property="latitude", type="number", format="float", example=28.6139, description="Location latitude", nullable=true),
+     *                 @OA\Property(property="longitude", type="number", format="float", example=77.2090, description="Location longitude", nullable=true),
+     *                 @OA\Property(property="address", type="string", example="123 Main Street, City", description="Location address", nullable=true)
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=201,
+     *         description="Meeting started successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Meeting started successfully"),
+     *             @OA\Property(property="meeting", type="object", description="Meeting details"),
+     *             @OA\Property(property="selfie_url", type="string", example="https://s3.amazonaws.com/bucket/selfie.jpg", description="Selfie image URL", nullable=true)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation failed",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Validation failed"),
+     *             @OA\Property(property="errors", type="object", example={"lead_id": {"The lead id field is required."}})
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthenticated"
+     *     )
+     * )
+     */
     public function startMeeting(Request $request)
     {
         $user = $request->user();
@@ -198,6 +331,55 @@ class MeetingController extends Controller
 
     /**
      * POST /meetings/end
+     */
+    /**
+     * @OA\Post(
+     *     path="/api/meetings/end",
+     *     summary="End a meeting",
+     *     description="End a meeting with selfie and location tracking",
+     *     operationId="endMeeting",
+     *     tags={"Meetings"},
+     *     security={{"sanctum": {}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\MediaType(
+     *             mediaType="multipart/form-data",
+     *             @OA\Schema(
+     *                 required={"meeting_id"},
+     *                 @OA\Property(property="meeting_id", type="integer", example=1, description="Meeting ID"),
+     *                 @OA\Property(property="selfie", type="string", format="binary", description="End meeting selfie image", nullable=true),
+     *                 @OA\Property(property="latitude", type="number", format="float", example=28.6140, description="End location latitude", nullable=true),
+     *                 @OA\Property(property="longitude", type="number", format="float", example=77.2091, description="End location longitude", nullable=true),
+     *                 @OA\Property(property="notes", type="string", example="Meeting completed successfully", description="Meeting notes", nullable=true)
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Meeting ended successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Meeting ended successfully"),
+     *             @OA\Property(property="meeting", type="object", description="Updated meeting details"),
+     *             @OA\Property(property="selfie_url", type="string", example="https://s3.amazonaws.com/bucket/end_selfie.jpg", description="End selfie image URL", nullable=true)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation failed",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Validation failed"),
+     *             @OA\Property(property="errors", type="object", example={"meeting_id": {"The meeting id field is required."}})
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Meeting not found"
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthenticated"
+     *     )
+     * )
      */
     public function endMeeting(Request $request)
     {

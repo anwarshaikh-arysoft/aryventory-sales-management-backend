@@ -2,23 +2,2524 @@
     "openapi": "3.0.0",
     "info": {
         "title": "Aryventory Sales Management API",
-        "description": "API documentation for Aryventory Sales Management System",
+        "description": "API for managing sales executives, leads, meetings, shifts, and business operations",
         "contact": {
-            "email": "admin@aryventory.com"
+            "email": "support@aryventory.com"
         },
         "license": {
-            "name": "Apache 2.0",
-            "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+            "name": "MIT",
+            "url": "https://opensource.org/licenses/MIT"
         },
         "version": "1.0.0"
     },
     "servers": [
         {
-            "url": "http://localhost:8001",
-            "description": "API Server"
+            "url": "http://localhost:8000/api",
+            "description": "Development server"
+        },
+        {
+            "url": "https://api.aryventory.com/api",
+            "description": "Production server"
         }
     ],
     "paths": {
+        "/api/dashboard/overview": {
+            "get": {
+                "tags": [
+                    "Dashboard"
+                ],
+                "summary": "Get dashboard overview",
+                "description": "Retrieve comprehensive dashboard overview with shift counts, revenue metrics, and performance data",
+                "operationId": "getDashboardOverview",
+                "parameters": [
+                    {
+                        "name": "start_date",
+                        "in": "query",
+                        "description": "Start date for data filtering (YYYY-MM-DD)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "end_date",
+                        "in": "query",
+                        "description": "End date for data filtering (YYYY-MM-DD)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "region",
+                        "in": "query",
+                        "description": "Filter by region/group ID",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "manager_id",
+                        "in": "query",
+                        "description": "Filter by manager ID",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Dashboard overview retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "shift_overview": {
+                                            "properties": {
+                                                "total_shifts_started": {
+                                                    "type": "integer",
+                                                    "example": 25
+                                                },
+                                                "active_shifts": {
+                                                    "type": "integer",
+                                                    "example": 8
+                                                },
+                                                "completed_shifts": {
+                                                    "type": "integer",
+                                                    "example": 17
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "revenue_metrics": {
+                                            "properties": {
+                                                "by_executive": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "user_id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "user_name": {
+                                                                "type": "string",
+                                                                "example": "John Doe"
+                                                            },
+                                                            "designation": {
+                                                                "type": "string",
+                                                                "example": "Sales Executive"
+                                                            },
+                                                            "group": {
+                                                                "type": "string",
+                                                                "example": "North Region"
+                                                            },
+                                                            "completed_leads": {
+                                                                "type": "integer",
+                                                                "example": 5
+                                                            },
+                                                            "estimated_revenue": {
+                                                                "type": "integer",
+                                                                "example": 250000
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "by_manager": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "manager_id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "manager_name": {
+                                                                "type": "string",
+                                                                "example": "Jane Smith"
+                                                            },
+                                                            "completed_leads": {
+                                                                "type": "integer",
+                                                                "example": 15
+                                                            },
+                                                            "estimated_revenue": {
+                                                                "type": "integer",
+                                                                "example": 750000
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "by_region": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "region_id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "region_name": {
+                                                                "type": "string",
+                                                                "example": "North Region"
+                                                            },
+                                                            "completed_leads": {
+                                                                "type": "integer",
+                                                                "example": 20
+                                                            },
+                                                            "estimated_revenue": {
+                                                                "type": "integer",
+                                                                "example": 1000000
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "total_completed_leads": {
+                                                    "type": "integer",
+                                                    "example": 25
+                                                },
+                                                "total_estimated_revenue": {
+                                                    "type": "integer",
+                                                    "example": 1250000
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "performance_metrics": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "user_id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "user_name": {
+                                                        "type": "string",
+                                                        "example": "John Doe"
+                                                    },
+                                                    "designation": {
+                                                        "type": "string",
+                                                        "example": "Sales Executive"
+                                                    },
+                                                    "role": {
+                                                        "type": "string",
+                                                        "example": "Sales Executive"
+                                                    },
+                                                    "group": {
+                                                        "type": "string",
+                                                        "example": "North Region"
+                                                    },
+                                                    "leads_created": {
+                                                        "type": "integer",
+                                                        "example": 10
+                                                    },
+                                                    "leads_completed": {
+                                                        "type": "integer",
+                                                        "example": 5
+                                                    },
+                                                    "meetings_conducted": {
+                                                        "type": "integer",
+                                                        "example": 8
+                                                    },
+                                                    "shifts_worked": {
+                                                        "type": "integer",
+                                                        "example": 20
+                                                    },
+                                                    "conversion_rate": {
+                                                        "type": "number",
+                                                        "format": "float",
+                                                        "example": 50
+                                                    },
+                                                    "target": {
+                                                        "type": "integer",
+                                                        "example": 15
+                                                    },
+                                                    "target_achievement": {
+                                                        "type": "number",
+                                                        "format": "float",
+                                                        "example": 33.33
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        },
+                                        "date_range": {
+                                            "properties": {
+                                                "start_date": {
+                                                    "type": "string",
+                                                    "example": "2024-01-01"
+                                                },
+                                                "end_date": {
+                                                    "type": "string",
+                                                    "example": "2024-01-31"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/dashboard/shift-locations": {
+            "get": {
+                "tags": [
+                    "Dashboard"
+                ],
+                "summary": "Get shift locations",
+                "description": "Retrieve shift locations for map display with GPS coordinates",
+                "operationId": "getShiftLocations",
+                "parameters": [
+                    {
+                        "name": "start_date",
+                        "in": "query",
+                        "description": "Start date for data filtering (YYYY-MM-DD)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "end_date",
+                        "in": "query",
+                        "description": "End date for data filtering (YYYY-MM-DD)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "region",
+                        "in": "query",
+                        "description": "Filter by region/group ID",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "manager_id",
+                        "in": "query",
+                        "description": "Filter by manager ID",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Shift locations retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "locations": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "user_name": {
+                                                        "type": "string",
+                                                        "example": "John Doe"
+                                                    },
+                                                    "designation": {
+                                                        "type": "string",
+                                                        "example": "Sales Executive"
+                                                    },
+                                                    "group": {
+                                                        "type": "string",
+                                                        "example": "North Region"
+                                                    },
+                                                    "shift_date": {
+                                                        "type": "string",
+                                                        "format": "date",
+                                                        "example": "2024-01-15"
+                                                    },
+                                                    "shift_start": {
+                                                        "type": "string",
+                                                        "format": "date-time",
+                                                        "example": "2024-01-15T09:00:00Z"
+                                                    },
+                                                    "latitude": {
+                                                        "type": "number",
+                                                        "format": "float",
+                                                        "example": 28.6139
+                                                    },
+                                                    "longitude": {
+                                                        "type": "number",
+                                                        "format": "float",
+                                                        "example": 77.209
+                                                    },
+                                                    "is_active": {
+                                                        "type": "boolean",
+                                                        "example": true
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        },
+                                        "total_count": {
+                                            "type": "integer",
+                                            "example": 25
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/dashboard/revenue-breakdown": {
+            "get": {
+                "tags": [
+                    "Dashboard"
+                ],
+                "summary": "Get revenue breakdown",
+                "description": "Get detailed revenue breakdown by executive, manager, region, or daily",
+                "operationId": "getRevenueBreakdown",
+                "parameters": [
+                    {
+                        "name": "start_date",
+                        "in": "query",
+                        "description": "Start date for data filtering (YYYY-MM-DD)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "end_date",
+                        "in": "query",
+                        "description": "End date for data filtering (YYYY-MM-DD)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "group_by",
+                        "in": "query",
+                        "description": "Group revenue by",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "executive",
+                                "manager",
+                                "region",
+                                "daily"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Revenue breakdown retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "revenue_breakdown": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "user_id": {
+                                                        "type": "integer",
+                                                        "example": 1,
+                                                        "nullable": true
+                                                    },
+                                                    "user_name": {
+                                                        "type": "string",
+                                                        "example": "John Doe",
+                                                        "nullable": true
+                                                    },
+                                                    "designation": {
+                                                        "type": "string",
+                                                        "example": "Sales Executive",
+                                                        "nullable": true
+                                                    },
+                                                    "completed_leads": {
+                                                        "type": "integer",
+                                                        "example": 5
+                                                    },
+                                                    "estimated_revenue": {
+                                                        "type": "integer",
+                                                        "example": 250000
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        },
+                                        "group_by": {
+                                            "type": "string",
+                                            "example": "executive"
+                                        },
+                                        "date_range": {
+                                            "properties": {
+                                                "start_date": {
+                                                    "type": "string",
+                                                    "example": "2024-01-01"
+                                                },
+                                                "end_date": {
+                                                    "type": "string",
+                                                    "example": "2024-01-31"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/dashboard/user-performance": {
+            "get": {
+                "tags": [
+                    "Dashboard"
+                ],
+                "summary": "Get user performance",
+                "description": "Get detailed user performance metrics with daily breakdown",
+                "operationId": "getUserPerformance",
+                "parameters": [
+                    {
+                        "name": "start_date",
+                        "in": "query",
+                        "description": "Start date for data filtering (YYYY-MM-DD)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "end_date",
+                        "in": "query",
+                        "description": "End date for data filtering (YYYY-MM-DD)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "user_id",
+                        "in": "query",
+                        "description": "Filter by specific user ID",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User performance retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "performance_data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "user_id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "user_name": {
+                                                        "type": "string",
+                                                        "example": "John Doe"
+                                                    },
+                                                    "designation": {
+                                                        "type": "string",
+                                                        "example": "Sales Executive"
+                                                    },
+                                                    "role": {
+                                                        "type": "string",
+                                                        "example": "Sales Executive"
+                                                    },
+                                                    "group": {
+                                                        "type": "string",
+                                                        "example": "North Region"
+                                                    },
+                                                    "daily_performance": {
+                                                        "type": "array",
+                                                        "items": {
+                                                            "properties": {
+                                                                "date": {
+                                                                    "type": "string",
+                                                                    "example": "2024-01-15"
+                                                                },
+                                                                "leads_created": {
+                                                                    "type": "integer",
+                                                                    "example": 2
+                                                                },
+                                                                "leads_completed": {
+                                                                    "type": "integer",
+                                                                    "example": 1
+                                                                },
+                                                                "meetings_conducted": {
+                                                                    "type": "integer",
+                                                                    "example": 3
+                                                                },
+                                                                "shift_worked": {
+                                                                    "type": "boolean",
+                                                                    "example": true
+                                                                }
+                                                            },
+                                                            "type": "object"
+                                                        }
+                                                    },
+                                                    "totals": {
+                                                        "properties": {
+                                                            "leads_created": {
+                                                                "type": "integer",
+                                                                "example": 20
+                                                            },
+                                                            "leads_completed": {
+                                                                "type": "integer",
+                                                                "example": 10
+                                                            },
+                                                            "conversion_rate": {
+                                                                "type": "number",
+                                                                "format": "float",
+                                                                "example": 50
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        },
+                                        "date_range": {
+                                            "properties": {
+                                                "start_date": {
+                                                    "type": "string",
+                                                    "example": "2024-01-01"
+                                                },
+                                                "end_date": {
+                                                    "type": "string",
+                                                    "example": "2024-01-31"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/leads": {
+            "get": {
+                "tags": [
+                    "Leads"
+                ],
+                "summary": "Get leads list",
+                "description": "Retrieve a paginated list of leads with filtering options",
+                "operationId": "getLeadsList",
+                "parameters": [
+                    {
+                        "name": "shop_name",
+                        "in": "query",
+                        "description": "Filter by shop name, contact person, email, or mobile number",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "contact_person",
+                        "in": "query",
+                        "description": "Filter by contact person name",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "mobile_number",
+                        "in": "query",
+                        "description": "Filter by mobile number",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "email",
+                        "in": "query",
+                        "description": "Filter by email address",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "area_locality",
+                        "in": "query",
+                        "description": "Filter by area or locality",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "business_type",
+                        "in": "query",
+                        "description": "Filter by business type ID",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "current_system",
+                        "in": "query",
+                        "description": "Filter by current system ID",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "lead_status",
+                        "in": "query",
+                        "description": "Filter by lead status ID",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "assigned_to",
+                        "in": "query",
+                        "description": "Filter by assigned user ID",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "created_by",
+                        "in": "query",
+                        "description": "Filter by creator user ID",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "next_follow_up_date",
+                        "in": "query",
+                        "description": "Filter by next follow-up date (YYYY-MM-DD)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "start_date",
+                        "in": "query",
+                        "description": "Filter by creation date range start (YYYY-MM-DD)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "end_date",
+                        "in": "query",
+                        "description": "Filter by creation date range end (YYYY-MM-DD)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Number of items per page",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 10
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Leads retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/Lead"
+                                            }
+                                        },
+                                        "current_page": {
+                                            "type": "integer"
+                                        },
+                                        "last_page": {
+                                            "type": "integer"
+                                        },
+                                        "per_page": {
+                                            "type": "integer"
+                                        },
+                                        "total": {
+                                            "type": "integer"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Leads"
+                ],
+                "summary": "Create a new lead",
+                "description": "Create a new lead with all required information",
+                "operationId": "createLead",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "shop_name",
+                                    "contact_person",
+                                    "mobile_number",
+                                    "address",
+                                    "area_locality",
+                                    "pincode",
+                                    "business_type",
+                                    "current_system",
+                                    "lead_status",
+                                    "plan_interest",
+                                    "assigned_to"
+                                ],
+                                "properties": {
+                                    "shop_name": {
+                                        "description": "Name of the shop/business",
+                                        "type": "string",
+                                        "example": "ABC Electronics"
+                                    },
+                                    "contact_person": {
+                                        "description": "Contact person name",
+                                        "type": "string",
+                                        "example": "John Doe"
+                                    },
+                                    "mobile_number": {
+                                        "description": "Primary mobile number",
+                                        "type": "string",
+                                        "example": "9876543210"
+                                    },
+                                    "alternate_number": {
+                                        "description": "Alternate mobile number",
+                                        "type": "string",
+                                        "example": "9876543211",
+                                        "nullable": true
+                                    },
+                                    "email": {
+                                        "description": "Email address",
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "john@example.com",
+                                        "nullable": true
+                                    },
+                                    "address": {
+                                        "description": "Business address",
+                                        "type": "string",
+                                        "example": "123 Main Street, City"
+                                    },
+                                    "area_locality": {
+                                        "description": "Area or locality",
+                                        "type": "string",
+                                        "example": "Downtown"
+                                    },
+                                    "pincode": {
+                                        "description": "Pincode",
+                                        "type": "string",
+                                        "example": "123456"
+                                    },
+                                    "branches": {
+                                        "description": "Number of branches",
+                                        "type": "integer",
+                                        "example": 2,
+                                        "nullable": true
+                                    },
+                                    "gps_location": {
+                                        "description": "GPS coordinates",
+                                        "type": "string",
+                                        "example": "28.6139,77.2090",
+                                        "nullable": true
+                                    },
+                                    "business_type": {
+                                        "description": "Business type ID",
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "current_system": {
+                                        "description": "Current system ID",
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "lead_status": {
+                                        "description": "Lead status ID",
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "plan_interest": {
+                                        "description": "Plan of interest",
+                                        "type": "string",
+                                        "example": "Premium Plan"
+                                    },
+                                    "next_follow_up_date": {
+                                        "description": "Next follow-up date",
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "2024-01-15",
+                                        "nullable": true
+                                    },
+                                    "meeting_notes": {
+                                        "description": "Meeting notes",
+                                        "type": "string",
+                                        "example": "Initial discussion completed",
+                                        "nullable": true
+                                    },
+                                    "assigned_to": {
+                                        "description": "User ID to assign the lead to",
+                                        "type": "integer",
+                                        "example": 2
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Lead created successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer",
+                                            "example": 1
+                                        },
+                                        "shop_name": {
+                                            "type": "string",
+                                            "example": "ABC Electronics"
+                                        },
+                                        "contact_person": {
+                                            "type": "string",
+                                            "example": "John Doe"
+                                        },
+                                        "mobile_number": {
+                                            "type": "string",
+                                            "example": "9876543210"
+                                        },
+                                        "created_at": {
+                                            "type": "string",
+                                            "format": "date-time",
+                                            "example": "2024-01-01T10:00:00Z"
+                                        },
+                                        "created_by_user": {
+                                            "$ref": "#/components/schemas/User"
+                                        },
+                                        "assigned_to_user": {
+                                            "$ref": "#/components/schemas/User"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation failed",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Validation failed"
+                                        },
+                                        "errors": {
+                                            "type": "object",
+                                            "example": {
+                                                "shop_name": [
+                                                    "The shop name field is required."
+                                                ]
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/leads/{lead}": {
+            "get": {
+                "tags": [
+                    "Leads"
+                ],
+                "summary": "Get lead details",
+                "description": "Retrieve detailed information about a specific lead including all related data",
+                "operationId": "getLeadDetails",
+                "parameters": [
+                    {
+                        "name": "lead",
+                        "in": "path",
+                        "description": "Lead ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lead details retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer",
+                                            "example": 1
+                                        },
+                                        "shop_name": {
+                                            "type": "string",
+                                            "example": "ABC Electronics"
+                                        },
+                                        "contact_person": {
+                                            "type": "string",
+                                            "example": "John Doe"
+                                        },
+                                        "mobile_number": {
+                                            "type": "string",
+                                            "example": "9876543210"
+                                        },
+                                        "email": {
+                                            "type": "string",
+                                            "example": "john@example.com"
+                                        },
+                                        "address": {
+                                            "type": "string",
+                                            "example": "123 Main Street, City"
+                                        },
+                                        "area_locality": {
+                                            "type": "string",
+                                            "example": "Downtown"
+                                        },
+                                        "pincode": {
+                                            "type": "string",
+                                            "example": "123456"
+                                        },
+                                        "branches": {
+                                            "type": "integer",
+                                            "example": 2
+                                        },
+                                        "gps_location": {
+                                            "type": "string",
+                                            "example": "28.6139,77.2090"
+                                        },
+                                        "plan_interest": {
+                                            "type": "string",
+                                            "example": "Premium Plan"
+                                        },
+                                        "next_follow_up_date": {
+                                            "type": "string",
+                                            "format": "date",
+                                            "example": "2024-01-15"
+                                        },
+                                        "meeting_notes": {
+                                            "type": "string",
+                                            "example": "Initial discussion completed"
+                                        },
+                                        "completed_at": {
+                                            "type": "string",
+                                            "format": "date-time",
+                                            "example": "2024-01-15T15:30:00Z",
+                                            "nullable": true
+                                        },
+                                        "created_at": {
+                                            "type": "string",
+                                            "format": "date-time",
+                                            "example": "2024-01-01T10:00:00Z"
+                                        },
+                                        "updated_at": {
+                                            "type": "string",
+                                            "format": "date-time",
+                                            "example": "2024-01-01T10:00:00Z"
+                                        },
+                                        "created_by_user": {
+                                            "$ref": "#/components/schemas/User"
+                                        },
+                                        "assigned_to_user": {
+                                            "$ref": "#/components/schemas/User"
+                                        },
+                                        "last_updated_by_user": {
+                                            "$ref": "#/components/schemas/User"
+                                        },
+                                        "business_type_data": {
+                                            "type": "object",
+                                            "example": {
+                                                "id": 1,
+                                                "name": "Retail"
+                                            }
+                                        },
+                                        "current_system_data": {
+                                            "type": "object",
+                                            "example": {
+                                                "id": 1,
+                                                "name": "Manual"
+                                            }
+                                        },
+                                        "lead_status_data": {
+                                            "type": "object",
+                                            "example": {
+                                                "id": 1,
+                                                "name": "New"
+                                            }
+                                        },
+                                        "recorded_audios": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object"
+                                            }
+                                        },
+                                        "selfies": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object"
+                                            }
+                                        },
+                                        "shop_photos": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object"
+                                            }
+                                        },
+                                        "histories": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object"
+                                            }
+                                        },
+                                        "follow_ups": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object"
+                                            }
+                                        },
+                                        "meetings": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Lead not found"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Leads"
+                ],
+                "summary": "Update lead",
+                "description": "Update an existing lead with new information",
+                "operationId": "updateLead",
+                "parameters": [
+                    {
+                        "name": "lead",
+                        "in": "path",
+                        "description": "Lead ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "shop_name": {
+                                        "description": "Name of the shop/business",
+                                        "type": "string",
+                                        "example": "ABC Electronics Updated"
+                                    },
+                                    "contact_person": {
+                                        "description": "Contact person name",
+                                        "type": "string",
+                                        "example": "John Doe"
+                                    },
+                                    "mobile_number": {
+                                        "description": "Primary mobile number",
+                                        "type": "string",
+                                        "example": "9876543210"
+                                    },
+                                    "alternate_number": {
+                                        "description": "Alternate mobile number",
+                                        "type": "string",
+                                        "example": "9876543211",
+                                        "nullable": true
+                                    },
+                                    "email": {
+                                        "description": "Email address",
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "john@example.com",
+                                        "nullable": true
+                                    },
+                                    "address": {
+                                        "description": "Business address",
+                                        "type": "string",
+                                        "example": "123 Main Street, City"
+                                    },
+                                    "area_locality": {
+                                        "description": "Area or locality",
+                                        "type": "string",
+                                        "example": "Downtown"
+                                    },
+                                    "pincode": {
+                                        "description": "Pincode",
+                                        "type": "string",
+                                        "example": "123456"
+                                    },
+                                    "branches": {
+                                        "description": "Number of branches",
+                                        "type": "integer",
+                                        "example": 2,
+                                        "nullable": true
+                                    },
+                                    "gps_location": {
+                                        "description": "GPS coordinates",
+                                        "type": "string",
+                                        "example": "28.6139,77.2090",
+                                        "nullable": true
+                                    },
+                                    "business_type": {
+                                        "description": "Business type ID",
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "current_system": {
+                                        "description": "Current system ID",
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "lead_status": {
+                                        "description": "Lead status ID",
+                                        "type": "integer",
+                                        "example": 2
+                                    },
+                                    "plan_interest": {
+                                        "description": "Plan of interest",
+                                        "type": "string",
+                                        "example": "Premium Plan"
+                                    },
+                                    "next_follow_up_date": {
+                                        "description": "Next follow-up date",
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "2024-01-20",
+                                        "nullable": true
+                                    },
+                                    "meeting_notes": {
+                                        "description": "Meeting notes",
+                                        "type": "string",
+                                        "example": "Follow-up discussion completed",
+                                        "nullable": true
+                                    },
+                                    "assigned_to": {
+                                        "description": "User ID to assign the lead to",
+                                        "type": "integer",
+                                        "example": 2
+                                    },
+                                    "action": {
+                                        "description": "Action taken",
+                                        "type": "string",
+                                        "example": "Status Updated",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Lead updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer",
+                                            "example": 1
+                                        },
+                                        "shop_name": {
+                                            "type": "string",
+                                            "example": "ABC Electronics Updated"
+                                        },
+                                        "contact_person": {
+                                            "type": "string",
+                                            "example": "John Doe"
+                                        },
+                                        "mobile_number": {
+                                            "type": "string",
+                                            "example": "9876543210"
+                                        },
+                                        "updated_at": {
+                                            "type": "string",
+                                            "format": "date-time",
+                                            "example": "2024-01-01T12:00:00Z"
+                                        },
+                                        "created_by_user": {
+                                            "$ref": "#/components/schemas/User"
+                                        },
+                                        "assigned_to_user": {
+                                            "$ref": "#/components/schemas/User"
+                                        },
+                                        "last_updated_by_user": {
+                                            "$ref": "#/components/schemas/User"
+                                        },
+                                        "business_type_data": {
+                                            "type": "object",
+                                            "example": {
+                                                "id": 1,
+                                                "name": "Retail"
+                                            }
+                                        },
+                                        "current_system_data": {
+                                            "type": "object",
+                                            "example": {
+                                                "id": 1,
+                                                "name": "Manual"
+                                            }
+                                        },
+                                        "lead_status_data": {
+                                            "type": "object",
+                                            "example": {
+                                                "id": 2,
+                                                "name": "In Progress"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation failed",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Validation failed"
+                                        },
+                                        "errors": {
+                                            "type": "object",
+                                            "example": {
+                                                "shop_name": [
+                                                    "The shop name field is required."
+                                                ]
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Lead not found"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Leads"
+                ],
+                "summary": "Delete lead",
+                "description": "Delete a specific lead",
+                "operationId": "deleteLead",
+                "parameters": [
+                    {
+                        "name": "lead",
+                        "in": "path",
+                        "description": "Lead ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lead deleted successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Lead deleted successfully"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Lead not found"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/leads-bulk": {
+            "delete": {
+                "tags": [
+                    "Leads"
+                ],
+                "summary": "Bulk delete leads",
+                "description": "Delete multiple leads at once",
+                "operationId": "bulkDeleteLeads",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "lead_ids"
+                                ],
+                                "properties": {
+                                    "lead_ids": {
+                                        "description": "Array of lead IDs to delete",
+                                        "type": "array",
+                                        "items": {
+                                            "type": "integer"
+                                        },
+                                        "example": [
+                                            1,
+                                            2,
+                                            3
+                                        ]
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Leads deleted successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Successfully deleted 3 lead(s)"
+                                        },
+                                        "deleted_count": {
+                                            "type": "integer",
+                                            "example": 3
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation failed",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Validation failed"
+                                        },
+                                        "errors": {
+                                            "type": "object",
+                                            "example": {
+                                                "lead_ids": [
+                                                    "The lead ids field is required."
+                                                ]
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/leads-form-options": {
+            "get": {
+                "tags": [
+                    "Leads"
+                ],
+                "summary": "Get lead form options",
+                "description": "Retrieve dropdown options for lead form (business types, current systems, lead statuses, users)",
+                "operationId": "getLeadFormOptions",
+                "responses": {
+                    "200": {
+                        "description": "Form options retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "business_types": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "name": {
+                                                        "type": "string",
+                                                        "example": "Retail"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        },
+                                        "current_systems": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "name": {
+                                                        "type": "string",
+                                                        "example": "Manual"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        },
+                                        "lead_statuses": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "name": {
+                                                        "type": "string",
+                                                        "example": "New"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        },
+                                        "users": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "name": {
+                                                        "type": "string",
+                                                        "example": "John Doe"
+                                                    },
+                                                    "email": {
+                                                        "type": "string",
+                                                        "example": "john@example.com"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/leads-export": {
+            "get": {
+                "tags": [
+                    "Leads"
+                ],
+                "summary": "Export leads to CSV",
+                "description": "Export leads to CSV file with all applied filters",
+                "operationId": "exportLeads",
+                "parameters": [
+                    {
+                        "name": "shop_name",
+                        "in": "query",
+                        "description": "Filter by shop name, contact person, email, or mobile number",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "contact_person",
+                        "in": "query",
+                        "description": "Filter by contact person name",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "mobile_number",
+                        "in": "query",
+                        "description": "Filter by mobile number",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "email",
+                        "in": "query",
+                        "description": "Filter by email address",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "area_locality",
+                        "in": "query",
+                        "description": "Filter by area or locality",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "business_type",
+                        "in": "query",
+                        "description": "Filter by business type ID",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "current_system",
+                        "in": "query",
+                        "description": "Filter by current system ID",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "lead_status",
+                        "in": "query",
+                        "description": "Filter by lead status ID",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "assigned_to",
+                        "in": "query",
+                        "description": "Filter by assigned user ID",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "created_by",
+                        "in": "query",
+                        "description": "Filter by creator user ID",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "next_follow_up_date",
+                        "in": "query",
+                        "description": "Filter by next follow-up date (YYYY-MM-DD)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "start_date",
+                        "in": "query",
+                        "description": "Filter by creation date range start (YYYY-MM-DD)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "end_date",
+                        "in": "query",
+                        "description": "Filter by creation date range end (YYYY-MM-DD)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "CSV file downloaded successfully",
+                        "content": {
+                            "text/csv": {
+                                "schema": {
+                                    "type": "string",
+                                    "format": "binary"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/meetings": {
+            "get": {
+                "tags": [
+                    "Meetings"
+                ],
+                "summary": "Get meetings list",
+                "description": "Retrieve all meetings with related data",
+                "operationId": "getMeetingsList",
+                "responses": {
+                    "200": {
+                        "description": "Meetings retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "properties": {
+                                            "id": {
+                                                "type": "integer",
+                                                "example": 1
+                                            },
+                                            "lead_id": {
+                                                "type": "integer",
+                                                "example": 1
+                                            },
+                                            "user_id": {
+                                                "type": "integer",
+                                                "example": 1
+                                            },
+                                            "meeting_start_time": {
+                                                "type": "string",
+                                                "format": "date-time",
+                                                "example": "2024-01-15T10:00:00Z"
+                                            },
+                                            "meeting_end_time": {
+                                                "type": "string",
+                                                "format": "date-time",
+                                                "example": "2024-01-15T11:00:00Z",
+                                                "nullable": true
+                                            },
+                                            "meeting_start_latitude": {
+                                                "type": "number",
+                                                "format": "float",
+                                                "example": 28.6139,
+                                                "nullable": true
+                                            },
+                                            "meeting_start_longitude": {
+                                                "type": "number",
+                                                "format": "float",
+                                                "example": 77.209,
+                                                "nullable": true
+                                            },
+                                            "meeting_end_latitude": {
+                                                "type": "number",
+                                                "format": "float",
+                                                "example": 28.614,
+                                                "nullable": true
+                                            },
+                                            "meeting_end_longitude": {
+                                                "type": "number",
+                                                "format": "float",
+                                                "example": 77.2091,
+                                                "nullable": true
+                                            },
+                                            "meeting_end_notes": {
+                                                "type": "string",
+                                                "example": "Meeting completed successfully",
+                                                "nullable": true
+                                            },
+                                            "created_at": {
+                                                "type": "string",
+                                                "format": "date-time",
+                                                "example": "2024-01-15T10:00:00Z"
+                                            },
+                                            "updated_at": {
+                                                "type": "string",
+                                                "format": "date-time",
+                                                "example": "2024-01-15T11:00:00Z"
+                                            },
+                                            "lead": {
+                                                "description": "Lead information",
+                                                "type": "object"
+                                            },
+                                            "recorded_audios": {
+                                                "type": "array",
+                                                "items": {
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "selfies": {
+                                                "type": "array",
+                                                "items": {
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "shop_photos": {
+                                                "type": "array",
+                                                "items": {
+                                                    "type": "object"
+                                                }
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Meetings"
+                ],
+                "summary": "Create a new meeting",
+                "description": "Create a new meeting for a lead",
+                "operationId": "createMeeting",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "lead_id",
+                                    "meeting_start_time"
+                                ],
+                                "properties": {
+                                    "lead_id": {
+                                        "description": "Lead ID",
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "meeting_start_time": {
+                                        "description": "Meeting start time",
+                                        "type": "string",
+                                        "format": "date-time",
+                                        "example": "2024-01-15T10:00:00Z"
+                                    },
+                                    "meeting_end_time": {
+                                        "description": "Meeting end time",
+                                        "type": "string",
+                                        "format": "date-time",
+                                        "example": "2024-01-15T11:00:00Z",
+                                        "nullable": true
+                                    },
+                                    "meeting_start_latitude": {
+                                        "description": "Start location latitude",
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 28.6139,
+                                        "nullable": true
+                                    },
+                                    "meeting_start_longitude": {
+                                        "description": "Start location longitude",
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 77.209,
+                                        "nullable": true
+                                    },
+                                    "meeting_end_latitude": {
+                                        "description": "End location latitude",
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 28.614,
+                                        "nullable": true
+                                    },
+                                    "meeting_end_longitude": {
+                                        "description": "End location longitude",
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 77.2091,
+                                        "nullable": true
+                                    },
+                                    "meeting_end_notes": {
+                                        "description": "Meeting notes",
+                                        "type": "string",
+                                        "example": "Meeting completed successfully",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Meeting created successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer",
+                                            "example": 1
+                                        },
+                                        "lead_id": {
+                                            "type": "integer",
+                                            "example": 1
+                                        },
+                                        "user_id": {
+                                            "type": "integer",
+                                            "example": 1
+                                        },
+                                        "meeting_start_time": {
+                                            "type": "string",
+                                            "format": "date-time",
+                                            "example": "2024-01-15T10:00:00Z"
+                                        },
+                                        "meeting_end_time": {
+                                            "type": "string",
+                                            "format": "date-time",
+                                            "example": "2024-01-15T11:00:00Z",
+                                            "nullable": true
+                                        },
+                                        "created_at": {
+                                            "type": "string",
+                                            "format": "date-time",
+                                            "example": "2024-01-15T10:00:00Z"
+                                        },
+                                        "updated_at": {
+                                            "type": "string",
+                                            "format": "date-time",
+                                            "example": "2024-01-15T10:00:00Z"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation failed",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Validation failed"
+                                        },
+                                        "errors": {
+                                            "type": "object",
+                                            "example": {
+                                                "lead_id": [
+                                                    "The lead id field is required."
+                                                ]
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/meetings/start": {
+            "post": {
+                "tags": [
+                    "Meetings"
+                ],
+                "summary": "Start a meeting",
+                "description": "Start a meeting with selfie and location tracking",
+                "operationId": "startMeeting",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "lead_id"
+                                ],
+                                "properties": {
+                                    "lead_id": {
+                                        "description": "Lead ID",
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "selfie": {
+                                        "description": "Selfie image",
+                                        "type": "string",
+                                        "format": "binary",
+                                        "nullable": true
+                                    },
+                                    "latitude": {
+                                        "description": "Location latitude",
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 28.6139,
+                                        "nullable": true
+                                    },
+                                    "longitude": {
+                                        "description": "Location longitude",
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 77.209,
+                                        "nullable": true
+                                    },
+                                    "address": {
+                                        "description": "Location address",
+                                        "type": "string",
+                                        "example": "123 Main Street, City",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Meeting started successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Meeting started successfully"
+                                        },
+                                        "meeting": {
+                                            "description": "Meeting details",
+                                            "type": "object"
+                                        },
+                                        "selfie_url": {
+                                            "description": "Selfie image URL",
+                                            "type": "string",
+                                            "example": "https://s3.amazonaws.com/bucket/selfie.jpg",
+                                            "nullable": true
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation failed",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Validation failed"
+                                        },
+                                        "errors": {
+                                            "type": "object",
+                                            "example": {
+                                                "lead_id": [
+                                                    "The lead id field is required."
+                                                ]
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/meetings/end": {
+            "post": {
+                "tags": [
+                    "Meetings"
+                ],
+                "summary": "End a meeting",
+                "description": "End a meeting with selfie and location tracking",
+                "operationId": "endMeeting",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "meeting_id"
+                                ],
+                                "properties": {
+                                    "meeting_id": {
+                                        "description": "Meeting ID",
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "selfie": {
+                                        "description": "End meeting selfie image",
+                                        "type": "string",
+                                        "format": "binary",
+                                        "nullable": true
+                                    },
+                                    "latitude": {
+                                        "description": "End location latitude",
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 28.614,
+                                        "nullable": true
+                                    },
+                                    "longitude": {
+                                        "description": "End location longitude",
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 77.2091,
+                                        "nullable": true
+                                    },
+                                    "notes": {
+                                        "description": "Meeting notes",
+                                        "type": "string",
+                                        "example": "Meeting completed successfully",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Meeting ended successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Meeting ended successfully"
+                                        },
+                                        "meeting": {
+                                            "description": "Updated meeting details",
+                                            "type": "object"
+                                        },
+                                        "selfie_url": {
+                                            "description": "End selfie image URL",
+                                            "type": "string",
+                                            "example": "https://s3.amazonaws.com/bucket/end_selfie.jpg",
+                                            "nullable": true
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation failed",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Validation failed"
+                                        },
+                                        "errors": {
+                                            "type": "object",
+                                            "example": {
+                                                "meeting_id": [
+                                                    "The meeting id field is required."
+                                                ]
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Meeting not found"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/sales-executive/leads": {
+            "get": {
+                "tags": [
+                    "Leads"
+                ],
+                "summary": "Get sales executive leads",
+                "description": "Retrieve all leads assigned to the logged-in sales executive",
+                "operationId": "getSalesExecutiveLeads",
+                "responses": {
+                    "200": {
+                        "description": "Sales executive leads retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "properties": {
+                                            "id": {
+                                                "type": "integer",
+                                                "example": 1
+                                            },
+                                            "shop_name": {
+                                                "type": "string",
+                                                "example": "ABC Electronics"
+                                            },
+                                            "contact_person": {
+                                                "type": "string",
+                                                "example": "John Doe"
+                                            },
+                                            "mobile_number": {
+                                                "type": "string",
+                                                "example": "9876543210"
+                                            },
+                                            "email": {
+                                                "type": "string",
+                                                "example": "john@example.com"
+                                            },
+                                            "address": {
+                                                "type": "string",
+                                                "example": "123 Main Street, City"
+                                            },
+                                            "area_locality": {
+                                                "type": "string",
+                                                "example": "Downtown"
+                                            },
+                                            "pincode": {
+                                                "type": "string",
+                                                "example": "123456"
+                                            },
+                                            "business_type": {
+                                                "type": "integer",
+                                                "example": 1
+                                            },
+                                            "current_system": {
+                                                "type": "integer",
+                                                "example": 1
+                                            },
+                                            "lead_status": {
+                                                "type": "integer",
+                                                "example": 1
+                                            },
+                                            "plan_interest": {
+                                                "type": "string",
+                                                "example": "Premium Plan"
+                                            },
+                                            "next_follow_up_date": {
+                                                "type": "string",
+                                                "format": "date",
+                                                "example": "2024-01-15"
+                                            },
+                                            "meeting_notes": {
+                                                "type": "string",
+                                                "example": "Initial discussion completed"
+                                            },
+                                            "assigned_to": {
+                                                "type": "integer",
+                                                "example": 1
+                                            },
+                                            "created_at": {
+                                                "type": "string",
+                                                "format": "date-time",
+                                                "example": "2024-01-01T10:00:00Z"
+                                            },
+                                            "updated_at": {
+                                                "type": "string",
+                                                "format": "date-time",
+                                                "example": "2024-01-01T10:00:00Z"
+                                            },
+                                            "lead_status_data": {
+                                                "type": "object",
+                                                "example": {
+                                                    "id": 1,
+                                                    "name": "New"
+                                                }
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/sales-executive/lead-counts-by-status": {
+            "get": {
+                "tags": [
+                    "Leads"
+                ],
+                "summary": "Get lead counts by status",
+                "description": "Get lead counts grouped by status for the logged-in sales executive",
+                "operationId": "getLeadCountsByStatus",
+                "responses": {
+                    "200": {
+                        "description": "Lead counts by status retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "properties": {
+                                            "lead_status": {
+                                                "type": "integer",
+                                                "example": 1
+                                            },
+                                            "status_name": {
+                                                "type": "string",
+                                                "example": "New"
+                                            },
+                                            "total": {
+                                                "type": "integer",
+                                                "example": 5
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/api/shifts": {
             "get": {
                 "tags": [
@@ -181,6 +2682,426 @@
                 ]
             }
         },
+        "/api/shift/end": {
+            "post": {
+                "tags": [
+                    "Shifts"
+                ],
+                "summary": "End a shift",
+                "description": "End the current shift for the authenticated user",
+                "operationId": "endShift",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "properties": {
+                                    "selfie": {
+                                        "description": "End shift selfie image",
+                                        "type": "string",
+                                        "format": "binary",
+                                        "nullable": true
+                                    },
+                                    "latitude": {
+                                        "description": "End location latitude",
+                                        "type": "number",
+                                        "format": "float",
+                                        "nullable": true
+                                    },
+                                    "longitude": {
+                                        "description": "End location longitude",
+                                        "type": "number",
+                                        "format": "float",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Shift ended successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Shift ended"
+                                        },
+                                        "shift": {
+                                            "$ref": "#/components/schemas/UserDailyShift"
+                                        },
+                                        "selfie_url": {
+                                            "description": "End selfie image URL",
+                                            "type": "string",
+                                            "example": "https://s3.amazonaws.com/bucket/end_selfie.jpg",
+                                            "nullable": true
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request - No shift started",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "No shift started"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/shift/start-break": {
+            "post": {
+                "tags": [
+                    "Shifts"
+                ],
+                "summary": "Start a break",
+                "description": "Start a break for the current shift",
+                "operationId": "startBreak",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "break_type": {
+                                        "description": "Type of break",
+                                        "type": "string",
+                                        "enum": [
+                                            "lunch",
+                                            "coffee",
+                                            "personal",
+                                            "other"
+                                        ],
+                                        "example": "lunch",
+                                        "nullable": true
+                                    },
+                                    "notes": {
+                                        "description": "Break notes",
+                                        "type": "string",
+                                        "example": "Lunch break",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Break started successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Break started"
+                                        },
+                                        "break": {
+                                            "description": "Break details",
+                                            "type": "object"
+                                        },
+                                        "shift": {
+                                            "description": "Updated shift details",
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request - No shift started or break already in progress",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "No shift started"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/shift/end-break": {
+            "post": {
+                "tags": [
+                    "Shifts"
+                ],
+                "summary": "End a break",
+                "description": "End the current active break",
+                "operationId": "endBreak",
+                "responses": {
+                    "200": {
+                        "description": "Break ended successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Break ended"
+                                        },
+                                        "break": {
+                                            "description": "Updated break details",
+                                            "type": "object"
+                                        },
+                                        "shift": {
+                                            "description": "Updated shift details",
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request - No active break to end",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "No active break to end"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/shift/status": {
+            "get": {
+                "tags": [
+                    "Shifts"
+                ],
+                "summary": "Get shift status",
+                "description": "Get current shift status and timers for the authenticated user",
+                "operationId": "getShiftStatus",
+                "responses": {
+                    "200": {
+                        "description": "Shift status retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "shift_started": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "shift_ended": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "break_started": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "break_ended": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "shift_timer": {
+                                            "description": "Shift duration in seconds",
+                                            "type": "integer",
+                                            "example": 3600
+                                        },
+                                        "break_timer": {
+                                            "description": "Current break duration in seconds",
+                                            "type": "integer",
+                                            "example": 0
+                                        },
+                                        "total_break_time": {
+                                            "description": "Total break time in seconds",
+                                            "type": "integer",
+                                            "example": 1800
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/users/{user}/shifts": {
+            "get": {
+                "tags": [
+                    "Shifts"
+                ],
+                "summary": "Get detailed user shifts with meeting information",
+                "description": "Retrieve detailed shift information including meetings, time between meetings, and distances",
+                "operationId": "getUserDetailedShifts",
+                "parameters": [
+                    {
+                        "name": "user",
+                        "in": "path",
+                        "description": "User ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "start_date",
+                        "in": "query",
+                        "description": "Start date for filtering (YYYY-MM-DD)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "end_date",
+                        "in": "query",
+                        "description": "End date for filtering (YYYY-MM-DD)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Detailed shift information retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "shifts": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer"
+                                                    },
+                                                    "shift_date": {
+                                                        "type": "string",
+                                                        "format": "date"
+                                                    },
+                                                    "shift_start": {
+                                                        "type": "string",
+                                                        "format": "date-time"
+                                                    },
+                                                    "shift_end": {
+                                                        "type": "string",
+                                                        "format": "date-time",
+                                                        "nullable": true
+                                                    },
+                                                    "meetings": {
+                                                        "type": "array",
+                                                        "items": {
+                                                            "properties": {
+                                                                "id": {
+                                                                    "type": "integer"
+                                                                },
+                                                                "meeting_start_time": {
+                                                                    "type": "string",
+                                                                    "format": "date-time"
+                                                                },
+                                                                "meeting_end_time": {
+                                                                    "type": "string",
+                                                                    "format": "date-time",
+                                                                    "nullable": true
+                                                                },
+                                                                "lead": {
+                                                                    "type": "object"
+                                                                },
+                                                                "time_from_previous_meeting": {
+                                                                    "type": "object"
+                                                                },
+                                                                "distance_from_previous_meeting": {
+                                                                    "type": "object"
+                                                                }
+                                                            },
+                                                            "type": "object"
+                                                        }
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/api/users": {
             "get": {
                 "tags": [
@@ -238,10 +3159,397 @@
                     }
                 ]
             }
+        },
+        "/api/user-preferences": {
+            "get": {
+                "tags": [
+                    "Settings"
+                ],
+                "summary": "Get user preferences",
+                "description": "Retrieve user preferences for the authenticated user",
+                "operationId": "getUserPreferences",
+                "responses": {
+                    "200": {
+                        "description": "User preferences retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "User preferences retrieved successfully."
+                                        },
+                                        "preferences": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "user_id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "preference_id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "status": {
+                                                        "type": "boolean",
+                                                        "example": true
+                                                    },
+                                                    "created_at": {
+                                                        "type": "string",
+                                                        "format": "date-time",
+                                                        "example": "2024-01-01T10:00:00Z"
+                                                    },
+                                                    "updated_at": {
+                                                        "type": "string",
+                                                        "format": "date-time",
+                                                        "example": "2024-01-01T10:00:00Z"
+                                                    },
+                                                    "preference": {
+                                                        "type": "object",
+                                                        "example": {
+                                                            "id": 1,
+                                                            "name": "Email Notifications",
+                                                            "description": "Receive email notifications"
+                                                        }
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Failed to fetch user preferences"
+                                        },
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Internal server error"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/user-preferences/update": {
+            "put": {
+                "tags": [
+                    "Settings"
+                ],
+                "summary": "Update user preferences",
+                "description": "Update user preferences for the authenticated user",
+                "operationId": "updateUserPreferences",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "preferences"
+                                ],
+                                "properties": {
+                                    "preferences": {
+                                        "type": "array",
+                                        "items": {
+                                            "properties": {
+                                                "preference_id": {
+                                                    "description": "Preference ID",
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "status": {
+                                                    "description": "Preference status",
+                                                    "type": "boolean",
+                                                    "example": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "example": [
+                                            {
+                                                "preference_id": 1,
+                                                "status": true
+                                            },
+                                            {
+                                                "preference_id": 2,
+                                                "status": false
+                                            }
+                                        ]
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "User preferences updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "User preferences updated successfully."
+                                        },
+                                        "preferences": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "user_id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "preference_id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "status": {
+                                                        "type": "boolean",
+                                                        "example": true
+                                                    },
+                                                    "created_at": {
+                                                        "type": "string",
+                                                        "format": "date-time",
+                                                        "example": "2024-01-01T10:00:00Z"
+                                                    },
+                                                    "updated_at": {
+                                                        "type": "string",
+                                                        "format": "date-time",
+                                                        "example": "2024-01-01T10:00:00Z"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation failed",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Validation failed"
+                                        },
+                                        "errors": {
+                                            "type": "object",
+                                            "example": {
+                                                "preferences": [
+                                                    "The preferences field is required."
+                                                ]
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Failed to update user preferences"
+                                        },
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Internal server error"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
         }
     },
     "components": {
         "schemas": {
+            "Lead": {
+                "title": "Lead",
+                "description": "Lead model representing a potential customer",
+                "properties": {
+                    "id": {
+                        "description": "Lead ID",
+                        "type": "integer"
+                    },
+                    "created_by": {
+                        "description": "User ID who created the lead",
+                        "type": "integer"
+                    },
+                    "assigned_to": {
+                        "description": "User ID assigned to the lead",
+                        "type": "integer"
+                    },
+                    "last_updated_by": {
+                        "description": "User ID who last updated the lead",
+                        "type": "integer"
+                    },
+                    "shop_name": {
+                        "description": "Name of the shop/business",
+                        "type": "string"
+                    },
+                    "contact_person": {
+                        "description": "Contact person name",
+                        "type": "string"
+                    },
+                    "mobile_number": {
+                        "description": "Primary mobile number",
+                        "type": "string"
+                    },
+                    "alternate_number": {
+                        "description": "Alternate mobile number",
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "email": {
+                        "description": "Email address",
+                        "type": "string",
+                        "format": "email",
+                        "nullable": true
+                    },
+                    "address": {
+                        "description": "Business address",
+                        "type": "string"
+                    },
+                    "area_locality": {
+                        "description": "Area or locality",
+                        "type": "string"
+                    },
+                    "pincode": {
+                        "description": "Pincode",
+                        "type": "string"
+                    },
+                    "branches": {
+                        "description": "Number of branches",
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "gps_location": {
+                        "description": "GPS coordinates",
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "business_type": {
+                        "description": "Business type ID",
+                        "type": "integer"
+                    },
+                    "current_system": {
+                        "description": "Current system ID",
+                        "type": "integer"
+                    },
+                    "lead_status": {
+                        "description": "Lead status ID",
+                        "type": "integer"
+                    },
+                    "plan_interest": {
+                        "description": "Plan of interest",
+                        "type": "string"
+                    },
+                    "next_follow_up_date": {
+                        "description": "Next follow-up date",
+                        "type": "string",
+                        "format": "date",
+                        "nullable": true
+                    },
+                    "meeting_notes": {
+                        "description": "Meeting notes",
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "completed_at": {
+                        "description": "Completion timestamp",
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "description": "Created timestamp",
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "description": "Updated timestamp",
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "created_by_user": {
+                        "$ref": "#/components/schemas/User"
+                    },
+                    "assigned_to_user": {
+                        "$ref": "#/components/schemas/User"
+                    },
+                    "last_updated_by_user": {
+                        "$ref": "#/components/schemas/User"
+                    },
+                    "business_type_data": {
+                        "description": "Business type details",
+                        "type": "object"
+                    },
+                    "current_system_data": {
+                        "description": "Current system details",
+                        "type": "object"
+                    },
+                    "lead_status_data": {
+                        "description": "Lead status details",
+                        "type": "object"
+                    }
+                },
+                "type": "object"
+            },
             "User": {
                 "title": "User",
                 "description": "User model",
@@ -284,6 +3592,62 @@
                         "description": "Email verified timestamp",
                         "type": "string",
                         "format": "date-time",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "description": "Created timestamp",
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "description": "Updated timestamp",
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "UserBreak": {
+                "title": "User Break",
+                "description": "User break model for tracking individual breaks during shifts",
+                "properties": {
+                    "id": {
+                        "description": "Break ID",
+                        "type": "integer"
+                    },
+                    "user_daily_shift_id": {
+                        "description": "Associated shift ID",
+                        "type": "integer"
+                    },
+                    "break_start": {
+                        "description": "Break start time",
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "break_end": {
+                        "description": "Break end time",
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "break_duration_mins": {
+                        "description": "Break duration in minutes",
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "break_type": {
+                        "description": "Type of break",
+                        "type": "string",
+                        "enum": [
+                            "lunch",
+                            "coffee",
+                            "personal",
+                            "other"
+                        ]
+                    },
+                    "notes": {
+                        "description": "Break notes",
+                        "type": "string",
                         "nullable": true
                     },
                     "created_at": {
@@ -399,10 +3763,10 @@
         },
         "securitySchemes": {
             "sanctum": {
-                "type": "apiKey",
+                "type": "http",
                 "description": "Enter token in format (Bearer <token>)",
-                "name": "Authorization",
-                "in": "header"
+                "bearerFormat": "JWT",
+                "scheme": "bearer"
             },
             "0": {
                 "sanctum": []
@@ -411,12 +3775,28 @@
     },
     "tags": [
         {
-            "name": "Shifts",
-            "description": "Shifts"
+            "name": "Users",
+            "description": "User management operations"
         },
         {
-            "name": "Users",
-            "description": "Users"
+            "name": "Leads",
+            "description": "Lead management operations"
+        },
+        {
+            "name": "Meetings",
+            "description": "Meeting management operations"
+        },
+        {
+            "name": "Shifts",
+            "description": "Shift and break management operations"
+        },
+        {
+            "name": "Dashboard",
+            "description": "Dashboard and analytics operations"
+        },
+        {
+            "name": "Settings",
+            "description": "System settings and configuration"
         }
     ]
 }

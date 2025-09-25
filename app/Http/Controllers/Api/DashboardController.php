@@ -14,7 +14,121 @@ use Carbon\Carbon;
 class DashboardController extends Controller
 {
     /**
-     * Get dashboard overview with shift counts, revenue, and performance metrics
+     * @OA\Get(
+     *     path="/api/dashboard/overview",
+     *     summary="Get dashboard overview",
+     *     description="Retrieve comprehensive dashboard overview with shift counts, revenue metrics, and performance data",
+     *     operationId="getDashboardOverview",
+     *     tags={"Dashboard"},
+     *     security={{"sanctum": {}}},
+     *     @OA\Parameter(
+     *         name="start_date",
+     *         in="query",
+     *         description="Start date for data filtering (YYYY-MM-DD)",
+     *         required=false,
+     *         @OA\Schema(type="string", format="date")
+     *     ),
+     *     @OA\Parameter(
+     *         name="end_date",
+     *         in="query",
+     *         description="End date for data filtering (YYYY-MM-DD)",
+     *         required=false,
+     *         @OA\Schema(type="string", format="date")
+     *     ),
+     *     @OA\Parameter(
+     *         name="region",
+     *         in="query",
+     *         description="Filter by region/group ID",
+     *         required=false,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Parameter(
+     *         name="manager_id",
+     *         in="query",
+     *         description="Filter by manager ID",
+     *         required=false,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Dashboard overview retrieved successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="shift_overview",
+     *                 type="object",
+     *                 @OA\Property(property="total_shifts_started", type="integer", example=25),
+     *                 @OA\Property(property="active_shifts", type="integer", example=8),
+     *                 @OA\Property(property="completed_shifts", type="integer", example=17)
+     *             ),
+     *             @OA\Property(
+     *                 property="revenue_metrics",
+     *                 type="object",
+     *                 @OA\Property(
+     *                     property="by_executive",
+     *                     type="array",
+     *                     @OA\Items(
+     *                         @OA\Property(property="user_id", type="integer", example=1),
+     *                         @OA\Property(property="user_name", type="string", example="John Doe"),
+     *                         @OA\Property(property="designation", type="string", example="Sales Executive"),
+     *                         @OA\Property(property="group", type="string", example="North Region"),
+     *                         @OA\Property(property="completed_leads", type="integer", example=5),
+     *                         @OA\Property(property="estimated_revenue", type="integer", example=250000)
+     *                     )
+     *                 ),
+     *                 @OA\Property(
+     *                     property="by_manager",
+     *                     type="array",
+     *                     @OA\Items(
+     *                         @OA\Property(property="manager_id", type="integer", example=1),
+     *                         @OA\Property(property="manager_name", type="string", example="Jane Smith"),
+     *                         @OA\Property(property="completed_leads", type="integer", example=15),
+     *                         @OA\Property(property="estimated_revenue", type="integer", example=750000)
+     *                     )
+     *                 ),
+     *                 @OA\Property(
+     *                     property="by_region",
+     *                     type="array",
+     *                     @OA\Items(
+     *                         @OA\Property(property="region_id", type="integer", example=1),
+     *                         @OA\Property(property="region_name", type="string", example="North Region"),
+     *                         @OA\Property(property="completed_leads", type="integer", example=20),
+     *                         @OA\Property(property="estimated_revenue", type="integer", example=1000000)
+     *                     )
+     *                 ),
+     *                 @OA\Property(property="total_completed_leads", type="integer", example=25),
+     *                 @OA\Property(property="total_estimated_revenue", type="integer", example=1250000)
+     *             ),
+     *             @OA\Property(
+     *                 property="performance_metrics",
+     *                 type="array",
+     *                 @OA\Items(
+     *                     @OA\Property(property="user_id", type="integer", example=1),
+     *                     @OA\Property(property="user_name", type="string", example="John Doe"),
+     *                     @OA\Property(property="designation", type="string", example="Sales Executive"),
+     *                     @OA\Property(property="role", type="string", example="Sales Executive"),
+     *                     @OA\Property(property="group", type="string", example="North Region"),
+     *                     @OA\Property(property="leads_created", type="integer", example=10),
+     *                     @OA\Property(property="leads_completed", type="integer", example=5),
+     *                     @OA\Property(property="meetings_conducted", type="integer", example=8),
+     *                     @OA\Property(property="shifts_worked", type="integer", example=20),
+     *                     @OA\Property(property="conversion_rate", type="number", format="float", example=50.0),
+     *                     @OA\Property(property="target", type="integer", example=15),
+     *                     @OA\Property(property="target_achievement", type="number", format="float", example=33.33)
+     *                 )
+     *             ),
+     *             @OA\Property(
+     *                 property="date_range",
+     *                 type="object",
+     *                 @OA\Property(property="start_date", type="string", example="2024-01-01"),
+     *                 @OA\Property(property="end_date", type="string", example="2024-01-31")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthenticated"
+     *     )
+     * )
      */
     public function overview(Request $request)
     {
@@ -51,7 +165,68 @@ class DashboardController extends Controller
     }
 
     /**
-     * Get shift locations for map display
+     * @OA\Get(
+     *     path="/api/dashboard/shift-locations",
+     *     summary="Get shift locations",
+     *     description="Retrieve shift locations for map display with GPS coordinates",
+     *     operationId="getShiftLocations",
+     *     tags={"Dashboard"},
+     *     security={{"sanctum": {}}},
+     *     @OA\Parameter(
+     *         name="start_date",
+     *         in="query",
+     *         description="Start date for data filtering (YYYY-MM-DD)",
+     *         required=false,
+     *         @OA\Schema(type="string", format="date")
+     *     ),
+     *     @OA\Parameter(
+     *         name="end_date",
+     *         in="query",
+     *         description="End date for data filtering (YYYY-MM-DD)",
+     *         required=false,
+     *         @OA\Schema(type="string", format="date")
+     *     ),
+     *     @OA\Parameter(
+     *         name="region",
+     *         in="query",
+     *         description="Filter by region/group ID",
+     *         required=false,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Parameter(
+     *         name="manager_id",
+     *         in="query",
+     *         description="Filter by manager ID",
+     *         required=false,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Shift locations retrieved successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="locations",
+     *                 type="array",
+     *                 @OA\Items(
+     *                     @OA\Property(property="id", type="integer", example=1),
+     *                     @OA\Property(property="user_name", type="string", example="John Doe"),
+     *                     @OA\Property(property="designation", type="string", example="Sales Executive"),
+     *                     @OA\Property(property="group", type="string", example="North Region"),
+     *                     @OA\Property(property="shift_date", type="string", format="date", example="2024-01-15"),
+     *                     @OA\Property(property="shift_start", type="string", format="date-time", example="2024-01-15T09:00:00Z"),
+     *                     @OA\Property(property="latitude", type="number", format="float", example=28.6139),
+     *                     @OA\Property(property="longitude", type="number", format="float", example=77.2090),
+     *                     @OA\Property(property="is_active", type="boolean", example=true)
+     *                 )
+     *             ),
+     *             @OA\Property(property="total_count", type="integer", example=25)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthenticated"
+     *     )
+     * )
      */
     public function shiftLocations(Request $request)
     {
@@ -107,7 +282,63 @@ class DashboardController extends Controller
     }
 
     /**
-     * Get detailed revenue breakdown
+     * @OA\Get(
+     *     path="/api/dashboard/revenue-breakdown",
+     *     summary="Get revenue breakdown",
+     *     description="Get detailed revenue breakdown by executive, manager, region, or daily",
+     *     operationId="getRevenueBreakdown",
+     *     tags={"Dashboard"},
+     *     security={{"sanctum": {}}},
+     *     @OA\Parameter(
+     *         name="start_date",
+     *         in="query",
+     *         description="Start date for data filtering (YYYY-MM-DD)",
+     *         required=false,
+     *         @OA\Schema(type="string", format="date")
+     *     ),
+     *     @OA\Parameter(
+     *         name="end_date",
+     *         in="query",
+     *         description="End date for data filtering (YYYY-MM-DD)",
+     *         required=false,
+     *         @OA\Schema(type="string", format="date")
+     *     ),
+     *     @OA\Parameter(
+     *         name="group_by",
+     *         in="query",
+     *         description="Group revenue by",
+     *         required=false,
+     *         @OA\Schema(type="string", enum={"executive", "manager", "region", "daily"})
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Revenue breakdown retrieved successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="revenue_breakdown",
+     *                 type="array",
+     *                 @OA\Items(
+     *                     @OA\Property(property="user_id", type="integer", example=1, nullable=true),
+     *                     @OA\Property(property="user_name", type="string", example="John Doe", nullable=true),
+     *                     @OA\Property(property="designation", type="string", example="Sales Executive", nullable=true),
+     *                     @OA\Property(property="completed_leads", type="integer", example=5),
+     *                     @OA\Property(property="estimated_revenue", type="integer", example=250000)
+     *                 )
+     *             ),
+     *             @OA\Property(property="group_by", type="string", example="executive"),
+     *             @OA\Property(
+     *                 property="date_range",
+     *                 type="object",
+     *                 @OA\Property(property="start_date", type="string", example="2024-01-01"),
+     *                 @OA\Property(property="end_date", type="string", example="2024-01-31")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthenticated"
+     *     )
+     * )
      */
     public function revenueBreakdown(Request $request)
     {
@@ -134,7 +365,80 @@ class DashboardController extends Controller
     }
 
     /**
-     * Get user performance details
+     * @OA\Get(
+     *     path="/api/dashboard/user-performance",
+     *     summary="Get user performance",
+     *     description="Get detailed user performance metrics with daily breakdown",
+     *     operationId="getUserPerformance",
+     *     tags={"Dashboard"},
+     *     security={{"sanctum": {}}},
+     *     @OA\Parameter(
+     *         name="start_date",
+     *         in="query",
+     *         description="Start date for data filtering (YYYY-MM-DD)",
+     *         required=false,
+     *         @OA\Schema(type="string", format="date")
+     *     ),
+     *     @OA\Parameter(
+     *         name="end_date",
+     *         in="query",
+     *         description="End date for data filtering (YYYY-MM-DD)",
+     *         required=false,
+     *         @OA\Schema(type="string", format="date")
+     *     ),
+     *     @OA\Parameter(
+     *         name="user_id",
+     *         in="query",
+     *         description="Filter by specific user ID",
+     *         required=false,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="User performance retrieved successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="performance_data",
+     *                 type="array",
+     *                 @OA\Items(
+     *                     @OA\Property(property="user_id", type="integer", example=1),
+     *                     @OA\Property(property="user_name", type="string", example="John Doe"),
+     *                     @OA\Property(property="designation", type="string", example="Sales Executive"),
+     *                     @OA\Property(property="role", type="string", example="Sales Executive"),
+     *                     @OA\Property(property="group", type="string", example="North Region"),
+     *                     @OA\Property(
+     *                         property="daily_performance",
+     *                         type="array",
+     *                         @OA\Items(
+     *                             @OA\Property(property="date", type="string", example="2024-01-15"),
+     *                             @OA\Property(property="leads_created", type="integer", example=2),
+     *                             @OA\Property(property="leads_completed", type="integer", example=1),
+     *                             @OA\Property(property="meetings_conducted", type="integer", example=3),
+     *                             @OA\Property(property="shift_worked", type="boolean", example=true)
+     *                         )
+     *                     ),
+     *                     @OA\Property(
+     *                         property="totals",
+     *                         type="object",
+     *                         @OA\Property(property="leads_created", type="integer", example=20),
+     *                         @OA\Property(property="leads_completed", type="integer", example=10),
+     *                         @OA\Property(property="conversion_rate", type="number", format="float", example=50.0)
+     *                     )
+     *                 )
+     *             ),
+     *             @OA\Property(
+     *                 property="date_range",
+     *                 type="object",
+     *                 @OA\Property(property="start_date", type="string", example="2024-01-01"),
+     *                 @OA\Property(property="end_date", type="string", example="2024-01-31")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthenticated"
+     *     )
+     * )
      */
     public function userPerformance(Request $request)
     {

@@ -13,7 +13,45 @@ use App\Models\LeadStatus;
 class SalesExecutiveLeadController extends Controller
 {
     /**
-     * Display a listing of the logged-in sales executive's leads.
+     * @OA\Get(
+     *     path="/api/sales-executive/leads",
+     *     summary="Get sales executive leads",
+     *     description="Retrieve all leads assigned to the logged-in sales executive",
+     *     operationId="getSalesExecutiveLeads",
+     *     tags={"Leads"},
+     *     security={{"sanctum": {}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Sales executive leads retrieved successfully",
+     *         @OA\JsonContent(
+     *             type="array",
+     *             @OA\Items(
+     *                 @OA\Property(property="id", type="integer", example=1),
+     *                 @OA\Property(property="shop_name", type="string", example="ABC Electronics"),
+     *                 @OA\Property(property="contact_person", type="string", example="John Doe"),
+     *                 @OA\Property(property="mobile_number", type="string", example="9876543210"),
+     *                 @OA\Property(property="email", type="string", example="john@example.com"),
+     *                 @OA\Property(property="address", type="string", example="123 Main Street, City"),
+     *                 @OA\Property(property="area_locality", type="string", example="Downtown"),
+     *                 @OA\Property(property="pincode", type="string", example="123456"),
+     *                 @OA\Property(property="business_type", type="integer", example=1),
+     *                 @OA\Property(property="current_system", type="integer", example=1),
+     *                 @OA\Property(property="lead_status", type="integer", example=1),
+     *                 @OA\Property(property="plan_interest", type="string", example="Premium Plan"),
+     *                 @OA\Property(property="next_follow_up_date", type="string", format="date", example="2024-01-15"),
+     *                 @OA\Property(property="meeting_notes", type="string", example="Initial discussion completed"),
+     *                 @OA\Property(property="assigned_to", type="integer", example=1),
+     *                 @OA\Property(property="created_at", type="string", format="date-time", example="2024-01-01T10:00:00Z"),
+     *                 @OA\Property(property="updated_at", type="string", format="date-time", example="2024-01-01T10:00:00Z"),
+     *                 @OA\Property(property="lead_status_data", type="object", example={"id": 1, "name": "New"})
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthenticated"
+     *     )
+     * )
      */
     public function index()
     {
@@ -24,7 +62,32 @@ class SalesExecutiveLeadController extends Controller
         return response()->json($leads);
     }
 
-    // Ge the lead counts by status for the logged-in sales executive
+    /**
+     * @OA\Get(
+     *     path="/api/sales-executive/lead-counts-by-status",
+     *     summary="Get lead counts by status",
+     *     description="Get lead counts grouped by status for the logged-in sales executive",
+     *     operationId="getLeadCountsByStatus",
+     *     tags={"Leads"},
+     *     security={{"sanctum": {}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Lead counts by status retrieved successfully",
+     *         @OA\JsonContent(
+     *             type="array",
+     *             @OA\Items(
+     *                 @OA\Property(property="lead_status", type="integer", example=1),
+     *                 @OA\Property(property="status_name", type="string", example="New"),
+     *                 @OA\Property(property="total", type="integer", example=5)
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthenticated"
+     *     )
+     * )
+     */
     public function leadCountsByStatus()
     {
         $userId = Auth::id();
@@ -72,7 +135,7 @@ class SalesExecutiveLeadController extends Controller
 
         // if lead_status is today then return only today's where follow_up_date is todays date
         if ($request->filled('lead_status') && $request->input('lead_status') == 'today') {
-            $query->whereDate('next_follow_up_date', Carbon::today())
+            $query->whereDate('next_follow_up_date', '<=', Carbon::today())
             ->whereNotIn('lead_status', $noFollowUpStatuses);
         }        
 

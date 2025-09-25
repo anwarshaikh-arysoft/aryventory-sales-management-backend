@@ -10,7 +10,48 @@ use Illuminate\Support\Facades\Log;
 
 class UserPreferencesController extends Controller
 {
-    //
+    /**
+     * @OA\Get(
+     *     path="/api/user-preferences",
+     *     summary="Get user preferences",
+     *     description="Retrieve user preferences for the authenticated user",
+     *     operationId="getUserPreferences",
+     *     tags={"Settings"},
+     *     security={{"sanctum": {}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="User preferences retrieved successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="User preferences retrieved successfully."),
+     *             @OA\Property(
+     *                 property="preferences",
+     *                 type="array",
+     *                 @OA\Items(
+     *                     @OA\Property(property="id", type="integer", example=1),
+     *                     @OA\Property(property="user_id", type="integer", example=1),
+     *                     @OA\Property(property="preference_id", type="integer", example=1),
+     *                     @OA\Property(property="status", type="boolean", example=true),
+     *                     @OA\Property(property="created_at", type="string", format="date-time", example="2024-01-01T10:00:00Z"),
+     *                     @OA\Property(property="updated_at", type="string", format="date-time", example="2024-01-01T10:00:00Z"),
+     *                     @OA\Property(property="preference", type="object", example={"id": 1, "name": "Email Notifications", "description": "Receive email notifications"})
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=500,
+     *         description="Server error",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Failed to fetch user preferences"),
+     *             @OA\Property(property="error", type="string", example="Internal server error")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthenticated"
+     *     )
+     * )
+     */
     public function index(Request $request)
     {
         try {
@@ -32,6 +73,70 @@ class UserPreferencesController extends Controller
         }
     }
 
+    /**
+     * @OA\Put(
+     *     path="/api/user-preferences/update",
+     *     summary="Update user preferences",
+     *     description="Update user preferences for the authenticated user",
+     *     operationId="updateUserPreferences",
+     *     tags={"Settings"},
+     *     security={{"sanctum": {}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"preferences"},
+     *             @OA\Property(
+     *                 property="preferences",
+     *                 type="array",
+     *                 @OA\Items(
+     *                     @OA\Property(property="preference_id", type="integer", example=1, description="Preference ID"),
+     *                     @OA\Property(property="status", type="boolean", example=true, description="Preference status")
+     *                 ),
+     *                 example={{"preference_id": 1, "status": true}, {"preference_id": 2, "status": false}}
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="User preferences updated successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="User preferences updated successfully."),
+     *             @OA\Property(
+     *                 property="preferences",
+     *                 type="array",
+     *                 @OA\Items(
+     *                     @OA\Property(property="id", type="integer", example=1),
+     *                     @OA\Property(property="user_id", type="integer", example=1),
+     *                     @OA\Property(property="preference_id", type="integer", example=1),
+     *                     @OA\Property(property="status", type="boolean", example=true),
+     *                     @OA\Property(property="created_at", type="string", format="date-time", example="2024-01-01T10:00:00Z"),
+     *                     @OA\Property(property="updated_at", type="string", format="date-time", example="2024-01-01T10:00:00Z")
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation failed",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Validation failed"),
+     *             @OA\Property(property="errors", type="object", example={"preferences": {"The preferences field is required."}})
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=500,
+     *         description="Server error",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Failed to update user preferences"),
+     *             @OA\Property(property="error", type="string", example="Internal server error")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthenticated"
+     *     )
+     * )
+     */
     public function update(Request $request)
     {
         Log::info(" Update api hit for user preferences.");

@@ -20,7 +20,127 @@ use App\Http\Requests\LeadStoreRequest;
 class LeadController extends Controller
 {
     /**
-     * Display a listing of leads.
+     * @OA\Get(
+     *     path="/api/leads",
+     *     summary="Get leads list",
+     *     description="Retrieve a paginated list of leads with filtering options",
+     *     operationId="getLeadsList",
+     *     tags={"Leads"},
+     *     security={{"sanctum": {}}},
+     *     @OA\Parameter(
+     *         name="shop_name",
+     *         in="query",
+     *         description="Filter by shop name, contact person, email, or mobile number",
+     *         required=false,
+     *         @OA\Schema(type="string")
+     *     ),
+     *     @OA\Parameter(
+     *         name="contact_person",
+     *         in="query",
+     *         description="Filter by contact person name",
+     *         required=false,
+     *         @OA\Schema(type="string")
+     *     ),
+     *     @OA\Parameter(
+     *         name="mobile_number",
+     *         in="query",
+     *         description="Filter by mobile number",
+     *         required=false,
+     *         @OA\Schema(type="string")
+     *     ),
+     *     @OA\Parameter(
+     *         name="email",
+     *         in="query",
+     *         description="Filter by email address",
+     *         required=false,
+     *         @OA\Schema(type="string")
+     *     ),
+     *     @OA\Parameter(
+     *         name="area_locality",
+     *         in="query",
+     *         description="Filter by area or locality",
+     *         required=false,
+     *         @OA\Schema(type="string")
+     *     ),
+     *     @OA\Parameter(
+     *         name="business_type",
+     *         in="query",
+     *         description="Filter by business type ID",
+     *         required=false,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Parameter(
+     *         name="current_system",
+     *         in="query",
+     *         description="Filter by current system ID",
+     *         required=false,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Parameter(
+     *         name="lead_status",
+     *         in="query",
+     *         description="Filter by lead status ID",
+     *         required=false,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Parameter(
+     *         name="assigned_to",
+     *         in="query",
+     *         description="Filter by assigned user ID",
+     *         required=false,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Parameter(
+     *         name="created_by",
+     *         in="query",
+     *         description="Filter by creator user ID",
+     *         required=false,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Parameter(
+     *         name="next_follow_up_date",
+     *         in="query",
+     *         description="Filter by next follow-up date (YYYY-MM-DD)",
+     *         required=false,
+     *         @OA\Schema(type="string", format="date")
+     *     ),
+     *     @OA\Parameter(
+     *         name="start_date",
+     *         in="query",
+     *         description="Filter by creation date range start (YYYY-MM-DD)",
+     *         required=false,
+     *         @OA\Schema(type="string", format="date")
+     *     ),
+     *     @OA\Parameter(
+     *         name="end_date",
+     *         in="query",
+     *         description="Filter by creation date range end (YYYY-MM-DD)",
+     *         required=false,
+     *         @OA\Schema(type="string", format="date")
+     *     ),
+     *     @OA\Parameter(
+     *         name="per_page",
+     *         in="query",
+     *         description="Number of items per page",
+     *         required=false,
+     *         @OA\Schema(type="integer", default=10)
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Leads retrieved successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/Lead")),
+     *             @OA\Property(property="current_page", type="integer"),
+     *             @OA\Property(property="last_page", type="integer"),
+     *             @OA\Property(property="per_page", type="integer"),
+     *             @OA\Property(property="total", type="integer")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthenticated"
+     *     )
+     * )
      */
     public function index(Request $request)
     {
@@ -180,6 +300,64 @@ class LeadController extends Controller
     //     return response()->json($lead, 201);
     // }
 
+    /**
+     * @OA\Post(
+     *     path="/api/leads",
+     *     summary="Create a new lead",
+     *     description="Create a new lead with all required information",
+     *     operationId="createLead",
+     *     tags={"Leads"},
+     *     security={{"sanctum": {}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"shop_name", "contact_person", "mobile_number", "address", "area_locality", "pincode", "business_type", "current_system", "lead_status", "plan_interest", "assigned_to"},
+     *             @OA\Property(property="shop_name", type="string", example="ABC Electronics", description="Name of the shop/business"),
+     *             @OA\Property(property="contact_person", type="string", example="John Doe", description="Contact person name"),
+     *             @OA\Property(property="mobile_number", type="string", example="9876543210", description="Primary mobile number"),
+     *             @OA\Property(property="alternate_number", type="string", example="9876543211", description="Alternate mobile number", nullable=true),
+     *             @OA\Property(property="email", type="string", format="email", example="john@example.com", description="Email address", nullable=true),
+     *             @OA\Property(property="address", type="string", example="123 Main Street, City", description="Business address"),
+     *             @OA\Property(property="area_locality", type="string", example="Downtown", description="Area or locality"),
+     *             @OA\Property(property="pincode", type="string", example="123456", description="Pincode"),
+     *             @OA\Property(property="branches", type="integer", example=2, description="Number of branches", nullable=true),
+     *             @OA\Property(property="gps_location", type="string", example="28.6139,77.2090", description="GPS coordinates", nullable=true),
+     *             @OA\Property(property="business_type", type="integer", example=1, description="Business type ID"),
+     *             @OA\Property(property="current_system", type="integer", example=1, description="Current system ID"),
+     *             @OA\Property(property="lead_status", type="integer", example=1, description="Lead status ID"),
+     *             @OA\Property(property="plan_interest", type="string", example="Premium Plan", description="Plan of interest"),
+     *             @OA\Property(property="next_follow_up_date", type="string", format="date", example="2024-01-15", description="Next follow-up date", nullable=true),
+     *             @OA\Property(property="meeting_notes", type="string", example="Initial discussion completed", description="Meeting notes", nullable=true),
+     *             @OA\Property(property="assigned_to", type="integer", example=2, description="User ID to assign the lead to")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=201,
+     *         description="Lead created successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="id", type="integer", example=1),
+     *             @OA\Property(property="shop_name", type="string", example="ABC Electronics"),
+     *             @OA\Property(property="contact_person", type="string", example="John Doe"),
+     *             @OA\Property(property="mobile_number", type="string", example="9876543210"),
+     *             @OA\Property(property="created_at", type="string", format="date-time", example="2024-01-01T10:00:00Z"),
+     *             @OA\Property(property="created_by_user", type="object", ref="#/components/schemas/User"),
+     *             @OA\Property(property="assigned_to_user", type="object", ref="#/components/schemas/User")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation failed",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Validation failed"),
+     *             @OA\Property(property="errors", type="object", example={"shop_name": {"The shop name field is required."}})
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthenticated"
+     *     )
+     * )
+     */
     public function store(LeadStoreRequest $request)
     {
         $data = $request->validated();
@@ -210,7 +388,63 @@ class LeadController extends Controller
     }
 
     /**
-     * Display the specified lead.
+     * @OA\Get(
+     *     path="/api/leads/{lead}",
+     *     summary="Get lead details",
+     *     description="Retrieve detailed information about a specific lead including all related data",
+     *     operationId="getLeadDetails",
+     *     tags={"Leads"},
+     *     security={{"sanctum": {}}},
+     *     @OA\Parameter(
+     *         name="lead",
+     *         in="path",
+     *         description="Lead ID",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Lead details retrieved successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="id", type="integer", example=1),
+     *             @OA\Property(property="shop_name", type="string", example="ABC Electronics"),
+     *             @OA\Property(property="contact_person", type="string", example="John Doe"),
+     *             @OA\Property(property="mobile_number", type="string", example="9876543210"),
+     *             @OA\Property(property="email", type="string", example="john@example.com"),
+     *             @OA\Property(property="address", type="string", example="123 Main Street, City"),
+     *             @OA\Property(property="area_locality", type="string", example="Downtown"),
+     *             @OA\Property(property="pincode", type="string", example="123456"),
+     *             @OA\Property(property="branches", type="integer", example=2),
+     *             @OA\Property(property="gps_location", type="string", example="28.6139,77.2090"),
+     *             @OA\Property(property="plan_interest", type="string", example="Premium Plan"),
+     *             @OA\Property(property="next_follow_up_date", type="string", format="date", example="2024-01-15"),
+     *             @OA\Property(property="meeting_notes", type="string", example="Initial discussion completed"),
+     *             @OA\Property(property="completed_at", type="string", format="date-time", example="2024-01-15T15:30:00Z", nullable=true),
+     *             @OA\Property(property="created_at", type="string", format="date-time", example="2024-01-01T10:00:00Z"),
+     *             @OA\Property(property="updated_at", type="string", format="date-time", example="2024-01-01T10:00:00Z"),
+     *             @OA\Property(property="created_by_user", type="object", ref="#/components/schemas/User"),
+     *             @OA\Property(property="assigned_to_user", type="object", ref="#/components/schemas/User"),
+     *             @OA\Property(property="last_updated_by_user", type="object", ref="#/components/schemas/User"),
+     *             @OA\Property(property="business_type_data", type="object", example={"id": 1, "name": "Retail"}),
+     *             @OA\Property(property="current_system_data", type="object", example={"id": 1, "name": "Manual"}),
+     *             @OA\Property(property="lead_status_data", type="object", example={"id": 1, "name": "New"}),
+     *             @OA\Property(property="recorded_audios", type="array", @OA\Items(type="object")),
+     *             @OA\Property(property="selfies", type="array", @OA\Items(type="object")),
+     *             @OA\Property(property="shop_photos", type="array", @OA\Items(type="object")),
+     *             @OA\Property(property="histories", type="array", @OA\Items(type="object")),
+     *             @OA\Property(property="follow_ups", type="array", @OA\Items(type="object")),
+     *             @OA\Property(property="meetings", type="array", @OA\Items(type="object"))
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Lead not found"
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthenticated"
+     *     )
+     * )
      */
     public function show(Lead $lead)
     {
@@ -236,7 +470,77 @@ class LeadController extends Controller
     }
 
     /**
-     * Update the specified lead in storage.
+     * @OA\Put(
+     *     path="/api/leads/{lead}",
+     *     summary="Update lead",
+     *     description="Update an existing lead with new information",
+     *     operationId="updateLead",
+     *     tags={"Leads"},
+     *     security={{"sanctum": {}}},
+     *     @OA\Parameter(
+     *         name="lead",
+     *         in="path",
+     *         description="Lead ID",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="shop_name", type="string", example="ABC Electronics Updated", description="Name of the shop/business"),
+     *             @OA\Property(property="contact_person", type="string", example="John Doe", description="Contact person name"),
+     *             @OA\Property(property="mobile_number", type="string", example="9876543210", description="Primary mobile number"),
+     *             @OA\Property(property="alternate_number", type="string", example="9876543211", description="Alternate mobile number", nullable=true),
+     *             @OA\Property(property="email", type="string", format="email", example="john@example.com", description="Email address", nullable=true),
+     *             @OA\Property(property="address", type="string", example="123 Main Street, City", description="Business address"),
+     *             @OA\Property(property="area_locality", type="string", example="Downtown", description="Area or locality"),
+     *             @OA\Property(property="pincode", type="string", example="123456", description="Pincode"),
+     *             @OA\Property(property="branches", type="integer", example=2, description="Number of branches", nullable=true),
+     *             @OA\Property(property="gps_location", type="string", example="28.6139,77.2090", description="GPS coordinates", nullable=true),
+     *             @OA\Property(property="business_type", type="integer", example=1, description="Business type ID"),
+     *             @OA\Property(property="current_system", type="integer", example=1, description="Current system ID"),
+     *             @OA\Property(property="lead_status", type="integer", example=2, description="Lead status ID"),
+     *             @OA\Property(property="plan_interest", type="string", example="Premium Plan", description="Plan of interest"),
+     *             @OA\Property(property="next_follow_up_date", type="string", format="date", example="2024-01-20", description="Next follow-up date", nullable=true),
+     *             @OA\Property(property="meeting_notes", type="string", example="Follow-up discussion completed", description="Meeting notes", nullable=true),
+     *             @OA\Property(property="assigned_to", type="integer", example=2, description="User ID to assign the lead to"),
+     *             @OA\Property(property="action", type="string", example="Status Updated", description="Action taken", nullable=true)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Lead updated successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="id", type="integer", example=1),
+     *             @OA\Property(property="shop_name", type="string", example="ABC Electronics Updated"),
+     *             @OA\Property(property="contact_person", type="string", example="John Doe"),
+     *             @OA\Property(property="mobile_number", type="string", example="9876543210"),
+     *             @OA\Property(property="updated_at", type="string", format="date-time", example="2024-01-01T12:00:00Z"),
+     *             @OA\Property(property="created_by_user", type="object", ref="#/components/schemas/User"),
+     *             @OA\Property(property="assigned_to_user", type="object", ref="#/components/schemas/User"),
+     *             @OA\Property(property="last_updated_by_user", type="object", ref="#/components/schemas/User"),
+     *             @OA\Property(property="business_type_data", type="object", example={"id": 1, "name": "Retail"}),
+     *             @OA\Property(property="current_system_data", type="object", example={"id": 1, "name": "Manual"}),
+     *             @OA\Property(property="lead_status_data", type="object", example={"id": 2, "name": "In Progress"})
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation failed",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Validation failed"),
+     *             @OA\Property(property="errors", type="object", example={"shop_name": {"The shop name field is required."}})
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Lead not found"
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthenticated"
+     *     )
+     * )
      */
     public function update(Request $request, Lead $lead)
     {
@@ -299,7 +603,36 @@ class LeadController extends Controller
     }
 
     /**
-     * Remove the specified lead from storage.
+     * @OA\Delete(
+     *     path="/api/leads/{lead}",
+     *     summary="Delete lead",
+     *     description="Delete a specific lead",
+     *     operationId="deleteLead",
+     *     tags={"Leads"},
+     *     security={{"sanctum": {}}},
+     *     @OA\Parameter(
+     *         name="lead",
+     *         in="path",
+     *         description="Lead ID",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Lead deleted successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Lead deleted successfully")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Lead not found"
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthenticated"
+     *     )
+     * )
      */
     public function destroy(Lead $lead)
     {
@@ -309,7 +642,47 @@ class LeadController extends Controller
     }
 
     /**
-     * Bulk delete leads
+     * @OA\Delete(
+     *     path="/api/leads-bulk",
+     *     summary="Bulk delete leads",
+     *     description="Delete multiple leads at once",
+     *     operationId="bulkDeleteLeads",
+     *     tags={"Leads"},
+     *     security={{"sanctum": {}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"lead_ids"},
+     *             @OA\Property(
+     *                 property="lead_ids",
+     *                 type="array",
+     *                 @OA\Items(type="integer"),
+     *                 example={1, 2, 3},
+     *                 description="Array of lead IDs to delete"
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Leads deleted successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Successfully deleted 3 lead(s)"),
+     *             @OA\Property(property="deleted_count", type="integer", example=3)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation failed",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Validation failed"),
+     *             @OA\Property(property="errors", type="object", example={"lead_ids": {"The lead ids field is required."}})
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthenticated"
+     *     )
+     * )
      */
     public function bulkDestroy(Request $request)
     {
@@ -335,7 +708,57 @@ class LeadController extends Controller
     }
 
     /**
-     * Get dropdown options for lead form
+     * @OA\Get(
+     *     path="/api/leads-form-options",
+     *     summary="Get lead form options",
+     *     description="Retrieve dropdown options for lead form (business types, current systems, lead statuses, users)",
+     *     operationId="getLeadFormOptions",
+     *     tags={"Leads"},
+     *     security={{"sanctum": {}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Form options retrieved successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="business_types",
+     *                 type="array",
+     *                 @OA\Items(
+     *                     @OA\Property(property="id", type="integer", example=1),
+     *                     @OA\Property(property="name", type="string", example="Retail")
+     *                 )
+     *             ),
+     *             @OA\Property(
+     *                 property="current_systems",
+     *                 type="array",
+     *                 @OA\Items(
+     *                     @OA\Property(property="id", type="integer", example=1),
+     *                     @OA\Property(property="name", type="string", example="Manual")
+     *                 )
+     *             ),
+     *             @OA\Property(
+     *                 property="lead_statuses",
+     *                 type="array",
+     *                 @OA\Items(
+     *                     @OA\Property(property="id", type="integer", example=1),
+     *                     @OA\Property(property="name", type="string", example="New")
+     *                 )
+     *             ),
+     *             @OA\Property(
+     *                 property="users",
+     *                 type="array",
+     *                 @OA\Items(
+     *                     @OA\Property(property="id", type="integer", example=1),
+     *                     @OA\Property(property="name", type="string", example="John Doe"),
+     *                     @OA\Property(property="email", type="string", example="john@example.com")
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthenticated"
+     *     )
+     * )
      */
     public function getFormOptions()
     {
@@ -348,7 +771,117 @@ class LeadController extends Controller
     }
 
     /**
-     * Export leads to CSV with all applied filters
+     * @OA\Get(
+     *     path="/api/leads-export",
+     *     summary="Export leads to CSV",
+     *     description="Export leads to CSV file with all applied filters",
+     *     operationId="exportLeads",
+     *     tags={"Leads"},
+     *     security={{"sanctum": {}}},
+     *     @OA\Parameter(
+     *         name="shop_name",
+     *         in="query",
+     *         description="Filter by shop name, contact person, email, or mobile number",
+     *         required=false,
+     *         @OA\Schema(type="string")
+     *     ),
+     *     @OA\Parameter(
+     *         name="contact_person",
+     *         in="query",
+     *         description="Filter by contact person name",
+     *         required=false,
+     *         @OA\Schema(type="string")
+     *     ),
+     *     @OA\Parameter(
+     *         name="mobile_number",
+     *         in="query",
+     *         description="Filter by mobile number",
+     *         required=false,
+     *         @OA\Schema(type="string")
+     *     ),
+     *     @OA\Parameter(
+     *         name="email",
+     *         in="query",
+     *         description="Filter by email address",
+     *         required=false,
+     *         @OA\Schema(type="string")
+     *     ),
+     *     @OA\Parameter(
+     *         name="area_locality",
+     *         in="query",
+     *         description="Filter by area or locality",
+     *         required=false,
+     *         @OA\Schema(type="string")
+     *     ),
+     *     @OA\Parameter(
+     *         name="business_type",
+     *         in="query",
+     *         description="Filter by business type ID",
+     *         required=false,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Parameter(
+     *         name="current_system",
+     *         in="query",
+     *         description="Filter by current system ID",
+     *         required=false,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Parameter(
+     *         name="lead_status",
+     *         in="query",
+     *         description="Filter by lead status ID",
+     *         required=false,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Parameter(
+     *         name="assigned_to",
+     *         in="query",
+     *         description="Filter by assigned user ID",
+     *         required=false,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Parameter(
+     *         name="created_by",
+     *         in="query",
+     *         description="Filter by creator user ID",
+     *         required=false,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Parameter(
+     *         name="next_follow_up_date",
+     *         in="query",
+     *         description="Filter by next follow-up date (YYYY-MM-DD)",
+     *         required=false,
+     *         @OA\Schema(type="string", format="date")
+     *     ),
+     *     @OA\Parameter(
+     *         name="start_date",
+     *         in="query",
+     *         description="Filter by creation date range start (YYYY-MM-DD)",
+     *         required=false,
+     *         @OA\Schema(type="string", format="date")
+     *     ),
+     *     @OA\Parameter(
+     *         name="end_date",
+     *         in="query",
+     *         description="Filter by creation date range end (YYYY-MM-DD)",
+     *         required=false,
+     *         @OA\Schema(type="string", format="date")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="CSV file downloaded successfully",
+     *         @OA\MediaType(
+     *             mediaType="text/csv",
+     *             @OA\Schema(type="string", format="binary")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthenticated"
+     *     )
+     * )
      */
     public function export(Request $request)
     {
