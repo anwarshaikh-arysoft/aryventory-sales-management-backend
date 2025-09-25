@@ -145,7 +145,7 @@ export default function LeadModal({ isOpen, onClose, onSave, lead, formOptions }
     const validateForm = (): boolean => {
         const newErrors: FormErrors = {};
 
-        // Required fields
+        // Required fields start
         if (!formData.shop_name.trim()) {
             newErrors.shop_name = ['Shop name is required'];
         }
@@ -181,6 +181,9 @@ export default function LeadModal({ isOpen, onClose, onSave, lead, formOptions }
         // if (!formData.business_type.trim() || formData.business_type === 'none') {
         //     newErrors.business_type = ['Business type is required'];
         // }        
+
+        // Required fields end
+
 
         // Email validation (optional but if provided should be valid)
         if (formData.email && formData.email.trim()) {
@@ -378,7 +381,7 @@ export default function LeadModal({ isOpen, onClose, onSave, lead, formOptions }
 
                         {/* Area/Locality */}
                         <div className="space-y-2">
-                            <Label htmlFor="area_locality">Area/Locality</Label>
+                            <Label htmlFor="area_locality">Area/Locality *</Label>
                             <Input
                                 id="area_locality"
                                 value={formData.area_locality}
@@ -393,7 +396,7 @@ export default function LeadModal({ isOpen, onClose, onSave, lead, formOptions }
 
                         {/* Pincode */}
                         <div className="space-y-2">
-                            <Label htmlFor="pincode">Pincode</Label>
+                            <Label htmlFor="pincode">Pincode *</Label>
                             <Input
                                 id="pincode"
                                 value={formData.pincode}
@@ -408,12 +411,12 @@ export default function LeadModal({ isOpen, onClose, onSave, lead, formOptions }
 
                         {/* GPS Location */}
                         <div className="space-y-2">
-                            <Label htmlFor="gps_location">GPS Location</Label>
+                            <Label htmlFor="gps_location">GPS Location *</Label>
                             <Input
                                 id="gps_location"
                                 value={formData.gps_location}
                                 onChange={(e) => handleInputChange('gps_location', e.target.value)}
-                                placeholder="Enter GPS coordinates"
+                                placeholder="Enter GPS coordinates (latitude, longitude)"
                                 className={getErrorMessage('gps_location') ? 'border-red-500' : ''}
                             />
                             {getErrorMessage('gps_location') && (
@@ -487,7 +490,7 @@ export default function LeadModal({ isOpen, onClose, onSave, lead, formOptions }
 
                         {/* Assigned To */}
                         <div className="space-y-2">
-                            <Label htmlFor="assigned_to">Assigned To</Label>
+                            <Label htmlFor="assigned_to">Assigned To *</Label>
                             <Select value={formData.assigned_to} onValueChange={(value) => handleInputChange('assigned_to', value)}>
                                 <SelectTrigger className={getErrorMessage('assigned_to') ? 'border-red-500' : ''}>
                                     <SelectValue placeholder="Select user" />
@@ -541,7 +544,7 @@ export default function LeadModal({ isOpen, onClose, onSave, lead, formOptions }
 
                     {/* Address */}
                     <div className="space-y-2">
-                        <Label htmlFor="address">Address</Label>
+                        <Label htmlFor="address">Address *</Label>
                         <Textarea
                             id="address"
                             value={formData.address}
