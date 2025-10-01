@@ -106,18 +106,93 @@ class SalesExecutiveLeadController extends Controller
         return response()->json($counts);
     }
 
-    // get all leads assigned to the logged-in sales executive with pagination, search, and filters
-    /* 
-    GET /sales-executive/leads?search=sharma&lead_status[]=Open&lead_status[]=Warm&follow_up_start_date=2025-08-01&follow_up_end_date=2025-08-31&sort=next_follow_up_date&direction=asc&per_page=20
-    */
+    /**
+     * @OA\Get(
+     *     path="/api/sales-executive/leads-advanced",
+     *     summary="Get sales executive leads with advanced filtering",
+     *     description="Retrieve all leads assigned to the authenticated sales executive with advanced filtering, search, and pagination",
+     *     operationId="getSalesExecutiveLeadsAdvanced",
+     *     tags={"Leads"},
+     *     security={{"sanctum": {}}},
+     *     @OA\Parameter(
+     *         name="search",
+     *         in="query",
+     *         description="Search by shop name, contact person, mobile number, email, address, area locality, or pincode",
+     *         required=false,
+     *         @OA\Schema(type="string")
+     *     ),
+     *     @OA\Parameter(
+     *         name="lead_status",
+     *         in="query",
+     *         description="Filter by lead status (can be array or single value, or 'today' for today's follow-ups, or 'sold' for sold leads)",
+     *         required=false,
+     *         @OA\Schema(
+     *             oneOf={
+     *                 @OA\Schema(type="array", @OA\Items(type="integer")),
+     *                 @OA\Schema(type="integer"),
+     *                 @OA\Schema(type="string", enum={"today", "sold"})
+     *             }
+     *         )
+     *     ),
+     *     @OA\Parameter(
+     *         name="follow_up_start_date",
+     *         in="query",
+     *         description="Filter by follow-up date range start (YYYY-MM-DD)",
+     *         required=false,
+     *         @OA\Schema(type="string", format="date")
+     *     ),
+     *     @OA\Parameter(
+     *         name="follow_up_end_date",
+     *         in="query",
+     *         description="Filter by follow-up date range end (YYYY-MM-DD)",
+     *         required=false,
+     *         @OA\Schema(type="string", format="date")
+     *     ),
+     *     @OA\Parameter(
+     *         name="sort",
+     *         in="query",
+     *         description="Sort field",
+     *         required=false,
+     *         @OA\Schema(type="string", enum={"next_follow_up_date", "created_at", "updated_at", "shop_name"}, default="next_follow_up_date")
+     *     ),
+     *     @OA\Parameter(
+     *         name="direction",
+     *         in="query",
+     *         description="Sort direction",
+     *         required=false,
+     *         @OA\Schema(type="string", enum={"asc", "desc"}, default="asc")
+     *     ),
+     *     @OA\Parameter(
+     *         name="per_page",
+     *         in="query",
+     *         description="Number of items per page",
+     *         required=false,
+     *         @OA\Schema(type="integer", default=15)
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Leads retrieved successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/Lead")),
+     *             @OA\Property(property="current_page", type="integer"),
+     *             @OA\Property(property="last_page", type="integer"),
+     *             @OA\Property(property="per_page", type="integer"),
+     *             @OA\Property(property="total", type="integer")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthenticated"
+     *     )
+     * )
+     */
     public function leads(Request $request)
     {
-
         $query = Lead::query()
             ->where('assigned_to', Auth::id())
             ->with('leadStatusData');
 
-        // Keyword search across multiple columns
+        // Keyword search
         if ($search = trim((string) $request->input('search'))) {
             $query->where(function ($q) use ($search) {
                 $q->where('shop_name', 'like', "%{$search}%")
@@ -130,52 +205,71 @@ class SalesExecutiveLeadController extends Controller
             });
         }
 
-        // Get No follow up statuses
-        $noFollowUpStatuses = LeadStatus::whereIn('name', ['Sold', 'Already Using CRM', 'Not Interested', 'Using Different App'])->pluck('id');
+        // Resolve important status IDs once
+        $soldStatusId = LeadStatus::where('name', 'Sold')->value('id');
+        $noFollowUpStatuses = LeadStatus::whereIn('name', [
+            'Sold',
+            'Already Using CRM',
+            'Not Interested',
+            'Using Different App'
+        ])->pluck('id');
 
-        // if lead_status is today then return only today's where follow_up_date is todays date
-        if ($request->filled('lead_status') && $request->input('lead_status') == 'today') {
-            $query->whereDate('next_follow_up_date', '<=', Carbon::today())
-            ->whereNotIn('lead_status', $noFollowUpStatuses);
-        }        
+        $leadStatusInput = $request->input('lead_status');
+        $isSold = false;
 
-        // Filter by lead_status (supports single value or array of values)
-        if ($request->filled('lead_status') && $request->input('lead_status') != 'today') {
-            $statuses = $request->input('lead_status');
-            $statuses = is_array($statuses) ? $statuses : [$statuses];
-            $query->whereIn('lead_status',  $statuses);
+        // "today" bucket (string control)
+        if ($leadStatusInput === 'today') {
+            $query->whereDate('next_follow_up_date', '=', Carbon::today())
+                ->whereNotIn('lead_status', $noFollowUpStatuses);
+        } else {
+            // Normalize to array for easier checks (but keep original for exact-sold detection)
+            $statuses = is_array($leadStatusInput) ? $leadStatusInput : ($leadStatusInput !== null ? [$leadStatusInput] : []);
+
+            // Detect Sold: string "sold", numeric equals soldStatusId, or a single-item array equal to soldStatusId
+            $isExactlySold =
+                $leadStatusInput === 'sold' ||
+                (is_numeric($leadStatusInput) && (int)$leadStatusInput === (int)$soldStatusId) ||
+                (is_array($leadStatusInput) && count($leadStatusInput) === 1 && (int)$leadStatusInput[0] === (int)$soldStatusId);
+
+            if ($isExactlySold) {
+                $isSold = true;
+                $query->where('lead_status', $soldStatusId)
+                    ->orderBy('completed_at', 'desc'); // special sort for Sold
+            } elseif (!empty($statuses)) {
+                // Regular status filtering (no special sort)
+                $query->whereIn('lead_status', $statuses);
+            }
         }
 
-        // Filter by next_follow_up_date range (either start, end, or both)
-        $start = $request->input('follow_up_start_date'); // e.g. '2025-08-01'
-        $end   = $request->input('follow_up_end_date');   // e.g. '2025-08-31'
-
-        if ($start) {
+        // Follow-up date range
+        if ($start = $request->input('follow_up_start_date')) {
             $query->whereDate('next_follow_up_date', '>=', date('Y-m-d', strtotime($start)));
         }
-        
-        if ($end) {
+        if ($end = $request->input('follow_up_end_date')) {
             $query->whereDate('next_follow_up_date', '<=', date('Y-m-d', strtotime($end)));
         }
 
-        // Sort + paginate (default: next_follow_up_date asc)
-        $allowedSorts = ['next_follow_up_date', 'created_at', 'updated_at', 'shop_name'];
-        $sort = $request->input('sort', 'next_follow_up_date');
-        $dir  = strtolower($request->input('direction', 'asc')) === 'desc' ? 'desc' : 'asc';
-        if (!in_array($sort, $allowedSorts, true)) {
-            $sort = 'next_follow_up_date';
+        // Apply global sort ONLY if not Sold
+        if (!$isSold) {
+            $allowedSorts = ['next_follow_up_date', 'created_at', 'updated_at', 'shop_name'];
+            $sort = $request->input('sort', 'next_follow_up_date');
+            $dir = strtolower($request->input('direction', 'asc')) === 'desc' ? 'desc' : 'asc';
+            if (!in_array($sort, $allowedSorts, true)) {
+                $sort = 'next_follow_up_date';
+            }
+            $query->orderBy($sort, $dir);
         }
-        $query->orderBy($sort, $dir);
 
+        // Pagination
         $perPage = (int) $request->get('per_page', 15);
-        if ($perPage <= 0) {
-            $perPage = 15;
-        }
+        if ($perPage <= 0) $perPage = 15;
 
         $leads = $query->paginate($perPage)->appends($request->query());
 
         return response()->json($leads);
     }
+
+
 
 
     /**
@@ -283,19 +377,48 @@ class SalesExecutiveLeadController extends Controller
     /**
      * Get leads sorted by next_follow_up_date.
      */
+    // public function leadsByFollowUpDate(Request $request)
+    // {
+    //     $perPage = $request->get('per_page', 15); // Default 15 per page if not provided
+
+    //     $noFollowUpStatuses = LeadStatus::whereIn('name', ['Sold', 'Already Using CRM', 'Not Interested', 'Using Different App'])->pluck('id');
+
+    //     $totalLeads = Lead::where('assigned_to', Auth::id())
+    //         ->whereNotIn('lead_status', $noFollowUpStatuses)
+    //         ->count();
+
+    //     $leads = Lead::where('assigned_to', Auth::id())
+    //         ->with('leadStatusData')
+    //         ->whereNotIn('lead_status', $noFollowUpStatuses)
+    //         ->orderBy('next_follow_up_date', 'asc')
+    //         ->paginate($perPage);
+
+    //     return response()->json([
+    //         'leads' => $leads,
+    //         'total_leads' => $totalLeads
+    //     ]);
+    // }
+
     public function leadsByFollowUpDate(Request $request)
     {
         $perPage = $request->get('per_page', 15); // Default 15 per page if not provided
 
-        $noFollowUpStatuses = LeadStatus::whereIn('name', ['Sold', 'Already Using CRM', 'Not Interested', 'Using Different App'])->pluck('id');
+        $noFollowUpStatuses = LeadStatus::whereIn('name', ['Sold', 'Already Using CRM', 'Not Interested', 'Using Different App'])
+            ->pluck('id');
 
         $totalLeads = Lead::where('assigned_to', Auth::id())
-            ->whereNotIn('lead_status', $noFollowUpStatuses)
+            ->where(function ($query) use ($noFollowUpStatuses) {
+                $query->whereNotIn('lead_status', $noFollowUpStatuses)
+                    ->orWhereNull('lead_status');
+            })
             ->count();
 
         $leads = Lead::where('assigned_to', Auth::id())
             ->with('leadStatusData')
-            ->whereNotIn('lead_status', $noFollowUpStatuses)
+            ->where(function ($query) use ($noFollowUpStatuses) {
+                $query->whereNotIn('lead_status', $noFollowUpStatuses)
+                    ->orWhereNull('lead_status');
+            })
             ->orderBy('next_follow_up_date', 'asc')
             ->paginate($perPage);
 

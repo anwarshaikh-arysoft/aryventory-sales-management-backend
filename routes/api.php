@@ -167,7 +167,7 @@ Route::middleware('auth:sanctum')->group(function () {
 // Leads api for sales executives
 Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('/sales-executive/leads', SalesExecutiveLeadController::class);
-    Route::get('/sales-executive/leads', [SalesExecutiveLeadController::class, 'leads']);
+    Route::get('/sales-executive/leads-advanced', [SalesExecutiveLeadController::class, 'leads']);
     Route::get('/sales-executive/leads-by-follow-up', [SalesExecutiveLeadController::class, 'leadsByFollowUpDate']);
 
     // Lead Counts by status for sales executives

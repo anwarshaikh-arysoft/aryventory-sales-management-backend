@@ -1006,18 +1006,25 @@ class ShiftController extends Controller
             'per_page' => 'nullable|integer|min:1|max:100'
         ]);
 
+        Log::info('getUserDetailedShifts: request', ['request' => $request->all()]);
+
         // Check if user exists
         $user = \App\Models\User::findOrFail($userId);
 
         $query = UserDailyShift::where('user_id', $userId);
 
         // Apply date filters
-        if ($request->filled('start_date') && $request->filled('end_date')) {
+        if ($request->filled('filter') && $request->filter == 'today') {
+            $query->whereDate('shift_date', now()->toDateString());
+        }
+        elseif ($request->filled('filter') && $request->filter == 'this_week') {
+            $query->whereBetween('shift_date', [
+                now()->startOfWeek()->toDateString(),
+                now()->endOfWeek()->toDateString()
+            ]);
+        }
+        elseif ($request->filled('filter') && $request->filter == 'custom') {
             $query->whereBetween('shift_date', [$request->start_date, $request->end_date]);
-        } elseif ($request->filled('start_date')) {
-            $query->whereDate('shift_date', '>=', $request->start_date);
-        } elseif ($request->filled('end_date')) {
-            $query->whereDate('shift_date', '<=', $request->end_date);
         }
 
         $perPage = $request->get('per_page', 10);

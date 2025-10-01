@@ -11,6 +11,7 @@ use Carbon\Carbon;
 use App\Models\Order;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
+use App\Models\LeadStatus;
 
 class StatsController extends Controller
 {
@@ -31,8 +32,12 @@ class StatsController extends Controller
                 ->where('assigned_to', $user->id)
                 ->count();
 
-            $followUps = Lead::whereDate('next_follow_up_date', '<=', Carbon::today())                
+            // Get No follow up statuses
+            $noFollowUpStatuses = LeadStatus::whereIn('name', ['Sold', 'Already Using CRM', 'Not Interested', 'Using Different App'])->pluck('id');
+        
+            $followUps = Lead::whereDate('next_follow_up_date', '=', Carbon::today())                
                 ->where('assigned_to', $user->id)
+                ->whereNotIn('lead_status', $noFollowUpStatuses)
                 ->count();
 
             $revenueByPlan = Lead::select(
